@@ -6,7 +6,7 @@ import { useState } from 'react';
 const isGithub = (value) => /github\.com\/.+/i.test(value.trim());
 const isLinkedin = (value) => /linkedin\.com\/.+/i.test(value.trim());
 
-export default function SubmitPane({ day, submission, onSubmit }) {
+export default function SubmitPane({ day, submission, onSubmit, isToday = true }) {
   const [github, setGithub] = useState('');
   const [linkedin, setLinkedin] = useState('');
   const [recapOpen, setRecapOpen] = useState(true);
@@ -15,7 +15,7 @@ export default function SubmitPane({ day, submission, onSubmit }) {
   const linkedinOk = isLinkedin(linkedin);
   const canSubmit = githubOk && linkedinOk;
 
-  if (submission?.github) {
+  if (submission) {
     return (
       <div className="pane">
         <section className="done">
@@ -24,24 +24,33 @@ export default function SubmitPane({ day, submission, onSubmit }) {
           </div>
           <h1 className="done__title">Day {day.id} is in</h1>
           <p className="done__note">
-            Submitted at {submission.at}. Tomorrow&apos;s task unlocks at midnight.
+            {isToday
+              ? `Submitted at ${submission.at}. Tomorrow's task unlocks at midnight.`
+              : `Closed out at ${submission.at}, and it still counts.`}
           </p>
 
-          <div className="done__links">
-            <a className="done__link" href={submission.github} target="_blank" rel="noreferrer noopener">
-              <b>GITHUB</b>
-              <span>Open ↗</span>
-            </a>
-            <a
-              className="done__link"
-              href={submission.linkedin}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              <b>LINKEDIN</b>
-              <span>Open ↗</span>
-            </a>
-          </div>
+          {submission.github && (
+            <div className="done__links">
+              <a
+                className="done__link"
+                href={submission.github}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                <b>GITHUB</b>
+                <span>Open ↗</span>
+              </a>
+              <a
+                className="done__link"
+                href={submission.linkedin}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                <b>LINKEDIN</b>
+                <span>Open ↗</span>
+              </a>
+            </div>
+          )}
         </section>
 
         <div className="pane__cta">

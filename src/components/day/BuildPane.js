@@ -15,18 +15,26 @@ function formatSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function BuildPane({ day, sessionStart, checks, onToggleCheck, onNext }) {
+export default function BuildPane({
+  day,
+  sessionStart,
+  checks,
+  onToggleCheck,
+  onNext,
+  closed = false,
+  submittedAt,
+}) {
   const [elapsed, setElapsed] = useState(0);
   const [attachment, setAttachment] = useState(null);
   const fileInput = useRef(null);
 
   useEffect(() => {
-    if (!sessionStart) return undefined;
+    if (closed || !sessionStart) return undefined;
     const tick = () => setElapsed(Math.floor((Date.now() - sessionStart) / 1000));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [sessionStart]);
+  }, [closed, sessionStart]);
 
   const handleFile = (event) => {
     const file = event.target.files?.[0];
@@ -38,36 +46,42 @@ export default function BuildPane({ day, sessionStart, checks, onToggleCheck, on
   return (
     <div className="pane">
       <section className="session">
-        <p className="eyebrow eyebrow--wide">WORKING ON DAY {day.id}</p>
-        <p className="session__clock">{formatClock(elapsed)}</p>
-        <p className="session__note">estimate was {day.estimateMinutes} minutes</p>
+        <p className="eyebrow eyebrow--wide">
+          {closed ? `DAY ${day.id} · CLOSED` : `WORKING ON DAY ${day.id}`}
+        </p>
+        <p className="session__clock">{closed ? (submittedAt ?? '—') : formatClock(elapsed)}</p>
+        <p className="session__note">
+          {closed ? 'submitted and counted' : `estimate was ${day.estimateMinutes} minutes`}
+        </p>
       </section>
 
-      <div className="session__actions">
-        <input
-          ref={fileInput}
-          type="file"
-          onChange={handleFile}
-          hidden
-          aria-hidden="true"
-          tabIndex={-1}
-        />
-        <button
-          type="button"
-          className="btn btn--quiet btn--sm"
-          onClick={() => fileInput.current?.click()}
-        >
-          <span style={{ color: 'var(--accent)', fontFamily: 'var(--mono)' }} aria-hidden="true">
-            ↑
-          </span>
-          Upload
-        </button>
-        <button type="button" className="btn btn--primary btn--sm" onClick={onNext}>
-          I&apos;m done →
-        </button>
-      </div>
+      {!closed && (
+        <div className="session__actions">
+          <input
+            ref={fileInput}
+            type="file"
+            onChange={handleFile}
+            hidden
+            aria-hidden="true"
+            tabIndex={-1}
+          />
+          <button
+            type="button"
+            className="btn btn--quiet btn--sm"
+            onClick={() => fileInput.current?.click()}
+          >
+            <span style={{ color: 'var(--accent)', fontFamily: 'var(--mono)' }} aria-hidden="true">
+              ↑
+            </span>
+            Upload
+          </button>
+          <button type="button" className="btn btn--primary btn--sm" onClick={onNext}>
+            I&apos;m done →
+          </button>
+        </div>
+      )}
 
-      {attachment && (
+      {!closed && attachment && (
         <div className="attach">
           <div>
             <p className="label label--tight">ATTACHED</p>
@@ -104,11 +118,12 @@ export default function BuildPane({ day, sessionStart, checks, onToggleCheck, on
                   type="button"
                   className="check"
                   role="checkbox"
-                  aria-checked={done}
+                  aria-checked={closed ? true : done}
+                  disabled={closed}
                   onClick={() => onToggleCheck(i)}
                 >
                   <span className="check__box" aria-hidden="true">
-                    {done ? '✓' : ''}
+                    {closed || done ? '✓' : ''}
                   </span>
                   <span className="check__label">{req.check}</span>
                 </button>
@@ -120,7 +135,7 @@ export default function BuildPane({ day, sessionStart, checks, onToggleCheck, on
 
       <div className="pane__cta" style={{ paddingTop: 20 }}>
         <button type="button" className="btn btn--primary" onClick={onNext}>
-          Go to Submit →
+          {closed ? 'See what you sent →' : 'Go to Submit →'}
         </button>
       </div>
     </div>

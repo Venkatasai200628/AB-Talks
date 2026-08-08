@@ -139,6 +139,19 @@ export function ChallengeProvider({ children }) {
       isSubmitted: (day) => shippedDays.has(Number(day)),
       getSubmission: (day) => submissions[day] ?? seedSubmissions[day] ?? null,
 
+      /**
+       * Where a day sits relative to today:
+       * 'shipped' closed out · 'missed' passed unclosed · 'today' open now ·
+       * 'locked' not reached yet.
+       */
+      dayStatus: (day) => {
+        const dayId = Number(day);
+        if (shippedDays.has(dayId)) return 'shipped';
+        if (dayId < seedStudent.currentDay) return 'missed';
+        if (dayId === seedStudent.currentDay) return 'today';
+        return 'locked';
+      },
+
       /** 0 = not shipped, 1..4 = how much that day produced. */
       outputLevel: (day) => (submissions[day] ? 4 : (outputByDay[day - 1] ?? 0)),
 

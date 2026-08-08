@@ -1113,6 +1113,10 @@ a.cell:hover {
   text-decoration: line-through;
 }
 
+.check:disabled {
+  cursor: default;
+}
+
 /* ── Day / Submit pane ───────────────────────────────────── */
 
 .close {
@@ -1225,6 +1229,18 @@ a.cell:hover {
   border: 1.5px solid var(--green-edge);
   border-radius: var(--radius-lg);
   text-align: center;
+}
+
+/* Same card, neutral key — a day not reached yet. */
+.done--locked {
+  border-color: var(--line-2);
+}
+
+.done--locked .done__mark {
+  background: var(--surface-2);
+  border-color: var(--line-3);
+  color: var(--muted-2);
+  font-size: 15px;
 }
 
 .done__mark {

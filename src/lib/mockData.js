@@ -4,13 +4,15 @@
  * so swapping in a real API later means changing those two files only.
  */
 
-export const TOTAL_DAYS = 60;
+import curriculum, { track } from './curriculum';
+
+export const TOTAL_DAYS = curriculum.length;
 
 export const student = {
   name: 'Aarav Nair',
   initials: 'AN',
-  track: 'Web Dev',
-  trackLabel: 'WEB DEV',
+  track,
+  trackLabel: track.toUpperCase(),
   cohort: 8,
   currentDay: 12,
   missed: 0,
@@ -60,93 +62,66 @@ export const outputByDay = [2, 3, 2, 4, 3, 4, 2, 3, 1, 4, 3];
 /** Day 1 landed on a Wednesday, so the first column starts two cells down. */
 export const gridLeadingPad = 2;
 
-const days = {
-  12: {
-    id: 12,
-    title: 'Build a debounced search input',
-    blurb:
-      'Filter a list of 500 records without firing a request on every keystroke.',
-    brief:
-      'Filter a list of 500 records without firing a request on every keystroke. Wait until typing stops, then search once.',
-    recap:
-      '300ms after typing stops. Cancel in-flight requests. Never let a stale response overwrite a fresh one. Empty box clears without a request.',
-    estimateMinutes: 45,
-    dueAt: '23:59',
-    requirements: [
-      {
-        brief: 'A 300ms delay after the last keystroke',
-        check: '300ms delay after typing stops',
-      },
-      {
-        brief: 'One request per search, not one per letter',
-        check: 'One request per search',
-      },
-      {
-        brief: 'An old response can never overwrite a newer one',
-        check: 'Old responses never overwrite new',
-      },
-      {
-        brief: 'Clearing the box clears results with no request',
-        check: 'Empty box clears without a request',
-      },
-    ],
-    docs: [
-      {
-        title: 'The delay itself',
-        source: 'MDN',
-        url: 'https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout',
-        body: 'setTimeout starts the 300ms clock; clearTimeout resets it every time a new key is pressed. That pair is the whole debounce.',
-      },
-      {
-        title: 'Cancelling a request',
-        source: 'MDN',
-        url: 'https://developer.mozilla.org/en-US/docs/Web/API/AbortController',
-        body: "Pass an AbortController's signal into fetch, then call abort() before firing the next search. Catch the AbortError — it's expected, not a bug.",
-      },
-      {
-        title: 'Debounce vs. throttle',
-        source: 'LODASH',
-        url: 'https://lodash.com/docs#debounce',
-        body: "Debounce waits for a pause — right for search. Throttle fires at a fixed rate — right for scroll. Know which one you're building.",
-      },
-    ],
-    readMinutes: 8,
-    trap: 'requests don’t come back in the order you sent them. A slow "ab" can land after a fast "abcd" and overwrite it. That’s the race condition today’s task is really about.',
-  },
-  11: {
-    id: 11,
-    title: 'Persist search state in the URL',
-    blurb: 'Reload the page and land on the same query, filters and page number.',
-  },
-  10: {
-    id: 10,
-    title: 'Fetch and render a results list',
-    blurb: 'Loading, empty and error states all have to be real screens.',
-  },
-};
+/** When each already-finished day was closed out. */
+const seedTimes = [
+  '21:12', '22:05', '20:40', '19:28', '23:01', '20:16',
+  '21:47', '22:33', '23:44', '19:05', '22:40',
+];
 
-/** What the seed data already counts as shipped, newest first. */
-export const seedSubmissions = {
-  11: { at: '22:40' },
-  10: { at: '19:05' },
-};
+export const seedSubmissions = Object.fromEntries(
+  seedTimes.map((at, i) => [i + 1, { at }]),
+);
+
+const DEFAULT_DUE_AT = '23:59';
+
+/** A requirement may be a bare string or a { brief, check } pair. */
+function normalizeRequirement(requirement) {
+  return typeof requirement === 'string'
+    ? { brief: requirement, check: requirement }
+    : requirement;
+}
+
+export function isRealDay(id) {
+  const dayId = Number(id);
+  return Number.isInteger(dayId) && dayId >= 1 && dayId <= TOTAL_DAYS;
+}
 
 export function getChallengeDay(id) {
   const dayId = Number(id);
-  if (days[dayId]) return days[dayId];
+  const entry = curriculum[dayId - 1];
+
+  if (!entry) {
+    return {
+      id: dayId,
+      exists: false,
+      title: `Day ${dayId}`,
+      blurb: 'This challenge only runs for 60 days.',
+      brief: `The challenge runs from day 1 to day ${TOTAL_DAYS}. There is no day ${dayId}.`,
+      recap: '',
+      estimateMinutes: 0,
+      dueAt: DEFAULT_DUE_AT,
+      requirements: [],
+      docs: [],
+      readMinutes: 0,
+      trap: '',
+    };
+  }
+
+  const requirements = (entry.requirements ?? []).map(normalizeRequirement);
 
   return {
     id: dayId,
-    title: `Day ${dayId}`,
-    blurb: 'This day has not been written yet.',
-    brief: 'This day has not been written yet. Check back when the cohort reaches it.',
-    recap: 'No brief published for this day.',
-    estimateMinutes: 45,
-    dueAt: '23:59',
-    requirements: [],
-    docs: [],
-    readMinutes: 0,
-    trap: '',
+    exists: true,
+    title: entry.title,
+    blurb: entry.blurb,
+    brief: entry.brief ?? entry.blurb,
+    recap: entry.recap ?? requirements.map((r) => r.brief).join('. '),
+    estimateMinutes: entry.estimateMinutes ?? 45,
+    dueAt: entry.dueAt ?? DEFAULT_DUE_AT,
+    requirements,
+    docs: entry.docs ?? [],
+    readMinutes: entry.readMinutes ?? 0,
+    trap: entry.trap ?? '',
   };
 }
 
