@@ -1,3 +1,4 @@
+import AppShell from '../components/AppShell';
 import { ChallengeProvider } from '../lib/challengeState';
 import { color, sans } from '../styles/tokens';
 
@@ -15,21 +16,10 @@ export const viewport = {
 
 const body = {
   margin: 0,
-  background: '#000',
   color: color.ink,
   fontFamily: sans,
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
-};
-
-const shell = {
-  boxSizing: 'border-box',
-  minHeight: '100dvh',
-  maxWidth: 430,
-  margin: '0 auto',
-  background: color.bg,
-  display: 'flex',
-  flexDirection: 'column',
 };
 
 export default function RootLayout({ children }) {
@@ -37,7 +27,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body style={body}>
         <ChallengeProvider>
-          <div style={shell}>{children}</div>
+          <AppShell>{children}</AppShell>
         </ChallengeProvider>
       </body>
     </html>
