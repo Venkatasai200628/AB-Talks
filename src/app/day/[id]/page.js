@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import BuildPane from '../../../components/day/BuildPane';
@@ -8,14 +7,52 @@ import LockedPane from '../../../components/day/LockedPane';
 import SubmitPane from '../../../components/day/SubmitPane';
 import TaskPane from '../../../components/day/TaskPane';
 import StreakPill from '../../../components/StreakPill';
+import HoverLink from '../../../components/ui/HoverLink';
 import { useChallenge } from '../../../lib/challengeState';
 import { getChallengeDay } from '../../../lib/mockData';
+import { borderBox, color, GUTTER, monoText, sansText, screen } from '../../../styles/tokens';
 
 const TABS = [
   { id: 'task', label: 'Task' },
   { id: 'build', label: 'Build' },
   { id: 'submit', label: 'Submit' },
 ];
+
+const styles = {
+  head: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: `14px ${GUTTER}px 0`,
+  },
+  back: {
+    ...borderBox,
+    width: 30,
+    height: 30,
+    flex: 'none',
+    borderRadius: 10,
+    background: color.surface,
+    border: `1px solid ${color.line}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...monoText(400, 14),
+    color: color.muted,
+  },
+  title: { ...sansText(700, 17), color: color.ink, letterSpacing: '-.02em', margin: 0 },
+  meta: { ...monoText(400, 10.5), color: color.muted2, margin: '3px 0 0' },
+  tabs: {
+    display: 'flex',
+    margin: `18px ${GUTTER}px 0`,
+    borderBottom: `1px solid ${color.line2}`,
+  },
+  due: {
+    padding: `0 ${GUTTER}px 26px`,
+    textAlign: 'center',
+    ...monoText(400, 11.5),
+    color: color.muted2,
+  },
+};
 
 /** Time left until the day's cutoff, e.g. "7H 18M LEFT". */
 function timeLeft(dueAt) {
@@ -28,6 +65,66 @@ function timeLeft(dueAt) {
 
   const totalMinutes = Math.floor((due - now) / 60000);
   return `${Math.floor(totalMinutes / 60)}H ${totalMinutes % 60}M LEFT`;
+}
+
+function Tab({ item, selected, onSelect }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      type="button"
+      role="tab"
+      data-tab={item.id}
+      aria-selected={selected}
+      tabIndex={selected ? 0 : -1}
+      onClick={onSelect}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        flex: 1,
+        textAlign: 'center',
+        padding: '11px 0',
+        background: 'none',
+        border: 0,
+        borderBottom: `2px solid ${selected ? color.accent : 'transparent'}`,
+        cursor: 'pointer',
+        transition: 'color .15s ease',
+        ...sansText(selected ? 600 : 500, 12.5),
+        color: selected ? color.ink : hovered ? color.ink3 : color.muted2,
+      }}
+    >
+      {item.label}
+    </button>
+  );
+}
+
+/** Header and shell shared by every state of a day. */
+function DayFrame({ day, student, children }) {
+  return (
+    <main style={screen}>
+      <header style={styles.head}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <HoverLink
+            href="/dashboard"
+            style={styles.back}
+            hoverStyle={{ color: color.ink }}
+            aria-label="Back to dashboard"
+          >
+            ←
+          </HoverLink>
+          <div>
+            <h1 style={styles.title}>Day {day.id}</h1>
+            <p style={styles.meta}>
+              {student.trackLabel}
+              {day.estimateMinutes ? ` · ~${day.estimateMinutes} MIN` : ''}
+            </p>
+          </div>
+        </div>
+        <StreakPill count={student.streak} small />
+      </header>
+      {children}
+    </main>
+  );
 }
 
 function ChallengeDay() {
@@ -91,25 +188,19 @@ function ChallengeDay() {
   return (
     <DayFrame day={day} student={student}>
       <nav
-        className="tabs"
+        style={styles.tabs}
         role="tablist"
         aria-label="Day sections"
         ref={tablist}
         onKeyDown={onTabKeyDown}
       >
         {TABS.map((item) => (
-          <button
+          <Tab
             key={item.id}
-            type="button"
-            role="tab"
-            className="tab"
-            data-tab={item.id}
-            aria-selected={tab === item.id}
-            tabIndex={tab === item.id ? 0 : -1}
-            onClick={() => openTab(item.id)}
-          >
-            {item.label}
-          </button>
+            item={item}
+            selected={tab === item.id}
+            onSelect={() => openTab(item.id)}
+          />
         ))}
       </nav>
 
@@ -139,7 +230,7 @@ function ChallengeDay() {
       )}
 
       {tab !== 'submit' && !closed && (
-        <p className="due">
+        <p style={styles.due}>
           DUE {day.dueAt} IST{remaining ? ` · ${remaining}` : ''}
         </p>
       )}
@@ -147,33 +238,9 @@ function ChallengeDay() {
   );
 }
 
-/** Header and shell shared by every state of a day. */
-function DayFrame({ day, student, children }) {
-  return (
-    <main className="screen">
-      <header className="dayhead">
-        <div className="dayhead__left">
-          <Link href="/dashboard" className="dayhead__back" aria-label="Back to dashboard">
-            ←
-          </Link>
-          <div>
-            <h1 className="dayhead__title">Day {day.id}</h1>
-            <p className="dayhead__meta">
-              {student.trackLabel}
-              {day.estimateMinutes ? ` · ~${day.estimateMinutes} MIN` : ''}
-            </p>
-          </div>
-        </div>
-        <StreakPill count={student.streak} small />
-      </header>
-      {children}
-    </main>
-  );
-}
-
 export default function ChallengeDayPage() {
   return (
-    <Suspense fallback={<main className="screen" />}>
+    <Suspense fallback={<main style={screen} />}>
       <ChallengeDay />
     </Suspense>
   );

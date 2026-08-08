@@ -1,5 +1,5 @@
-import './globals.css';
 import { ChallengeProvider } from '../lib/challengeState';
+import { color, sans } from '../styles/tokens';
 
 export const metadata = {
   title: 'ABTalks — 60 days of code',
@@ -10,15 +10,34 @@ export const metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#0a0a0b',
+  themeColor: color.bg,
+};
+
+const body = {
+  margin: 0,
+  background: '#000',
+  color: color.ink,
+  fontFamily: sans,
+  WebkitFontSmoothing: 'antialiased',
+  MozOsxFontSmoothing: 'grayscale',
+};
+
+const shell = {
+  boxSizing: 'border-box',
+  minHeight: '100dvh',
+  maxWidth: 430,
+  margin: '0 auto',
+  background: color.bg,
+  display: 'flex',
+  flexDirection: 'column',
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body style={body}>
         <ChallengeProvider>
-          <div className="shell">{children}</div>
+          <div style={shell}>{children}</div>
         </ChallengeProvider>
       </body>
     </html>
