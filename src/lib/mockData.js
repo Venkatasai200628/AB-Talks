@@ -1,27 +1,16 @@
 /**
  * Seed data — stands in for the database.
- * Everything the UI reads flows through here or through ChallengeProvider,
- * so swapping in a real API later means changing those two files only.
+ * Per-account state lives in profiles.js; this file is the challenge itself
+ * plus the landing copy. Everything the UI reads flows through here or through
+ * ChallengeProvider, so swapping in a real API means changing those only.
  */
 
 import curriculum, { track } from './curriculum';
 
 export const TOTAL_DAYS = curriculum.length;
 
-export const student = {
-  name: 'Aarav Nair',
-  initials: 'AN',
-  track,
-  trackLabel: track.toUpperCase(),
-  cohort: 8,
-  currentDay: 12,
-  missed: 0,
-  freezesLeft: 1,
-  rank: 48,
-  cohortSize: 214,
-  rankDelta: 6,
-  percentile: 23,
-};
+/** The track on offer, for copy that names it before a student picks one. */
+export const defaultTrack = track;
 
 export const landingProof = [
   { value: '60/60', label: 'DAYS DONE', tone: 'accent' },
@@ -47,30 +36,16 @@ export const landingSteps = [
   },
 ];
 
-export const badges = [
-  { label: '7-DAY STREAK', earned: true },
-  { label: 'NO FREEZE USED', earned: true },
-  { label: '30-DAY', earned: false },
-];
-
-/**
- * How much each finished day shipped, 1 (light) → 4 (heavy).
- * Index 0 is day 1. Drives the shade of each cell in the 60-day grid.
- */
-export const outputByDay = [2, 3, 2, 4, 3, 4, 2, 3, 1, 4, 3];
-
-/** Day 1 landed on a Wednesday, so the first column starts two cells down. */
+/** Day 1 landed on a Wednesday, so the first grid column starts two cells down. */
 export const gridLeadingPad = 2;
 
-/** When each already-finished day was closed out. */
-const seedTimes = [
+/** Deterministic close-out times, so a seeded day always reads the same. */
+const CLOSE_TIMES = [
   '21:12', '22:05', '20:40', '19:28', '23:01', '20:16',
   '21:47', '22:33', '23:44', '19:05', '22:40',
 ];
 
-export const seedSubmissions = Object.fromEntries(
-  seedTimes.map((at, i) => [i + 1, { at }]),
-);
+export const submissionTime = (day) => CLOSE_TIMES[(day - 1) % CLOSE_TIMES.length];
 
 const DEFAULT_DUE_AT = '23:59';
 
@@ -79,11 +54,6 @@ function normalizeRequirement(requirement) {
   return typeof requirement === 'string'
     ? { brief: requirement, check: requirement }
     : requirement;
-}
-
-export function isRealDay(id) {
-  const dayId = Number(id);
-  return Number.isInteger(dayId) && dayId >= 1 && dayId <= TOTAL_DAYS;
 }
 
 export function getChallengeDay(id) {
@@ -125,7 +95,9 @@ export function getChallengeDay(id) {
   };
 }
 
-/** The three most recent days, for the dashboard spine. */
+/** Today plus the days just behind it, for the dashboard spine. */
 export function getRecentDays(currentDay, count = 3) {
-  return Array.from({ length: count }, (_, i) => getChallengeDay(currentDay - i));
+  return Array.from({ length: count }, (_, i) => currentDay - i)
+    .filter((day) => day >= 1)
+    .map(getChallengeDay);
 }

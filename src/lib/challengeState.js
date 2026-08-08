@@ -1,12 +1,8 @@
 'use client';
 
 import { createContext, useContext, useMemo, useSyncExternalStore } from 'react';
-import {
-  TOTAL_DAYS,
-  outputByDay,
-  seedSubmissions,
-  student as seedStudent,
-} from './mockData';
+import { TOTAL_DAYS, submissionTime } from './mockData';
+import { getProfile } from './profiles';
 
 /**
  * Stands in for the backend. Pages never touch storage directly — they call the
@@ -70,10 +66,7 @@ function update(next) {
 }
 
 function clockNow() {
-  return new Date().toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
 
 /** POST /submissions */
@@ -110,34 +103,74 @@ function computeStreak(shippedDays, currentDay) {
 
 const ChallengeContext = createContext(null);
 
-/** Days 1..11 are already shipped in the seed data. */
-const seedShippedDays = Array.from({ length: outputByDay.length }, (_, i) => i + 1);
-
 export function ChallengeProvider({ children }) {
-  const { submissions, checks } = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-  );
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return <ChallengeContext.Provider value={state}>{children}</ChallengeContext.Provider>;
+}
 
-  const value = useMemo(() => {
-    const shippedDays = new Set(seedShippedDays);
+/**
+ * Reads the account. `profileKey` selects which seeded state to derive from —
+ * omitted, it is the typical student the plain routes show.
+ */
+export function useChallenge(profileKey) {
+  const state = useContext(ChallengeContext);
+  if (!state) {
+    throw new Error('useChallenge must be used inside a ChallengeProvider');
+  }
+
+  const { submissions, checks } = state;
+
+  return useMemo(() => {
+    const profile = getProfile(profileKey);
+    const { currentDay } = profile.student;
+
+    const shippedDays = new Set(profile.shippedDays);
     for (const day of Object.keys(submissions)) shippedDays.add(Number(day));
 
     const shipped = shippedDays.size;
+    const streak = computeStreak(shippedDays, currentDay);
+
+    // Every day already past that was never closed out.
+    let missed = 0;
+    for (let day = 1; day < currentDay; day += 1) {
+      if (!shippedDays.has(day)) missed += 1;
+    }
+
+    const { name, initials, track, rank } = profile.student;
 
     return {
+      profileKey: profile.key,
+
       student: {
-        ...seedStudent,
-        streak: computeStreak(shippedDays, seedStudent.currentDay),
+        ...profile.student,
+        name: name ?? 'Your profile',
+        initials: initials ?? '—',
+        trackLabel: track ? track.toUpperCase() : 'NO TRACK PICKED',
+        hasProfile: Boolean(name && track),
+        ranked: rank !== null,
+        streak,
         shipped,
+        missed,
         remaining: TOTAL_DAYS - shipped,
         percent: Math.round((shipped / TOTAL_DAYS) * 100),
       },
 
+      /** Earned state follows the data rather than being hard-coded. */
+      badges: [
+        { label: '7-DAY STREAK', earned: streak >= 7 },
+        { label: 'NO FREEZE USED', earned: profile.student.freezesUsed === 0 && shipped > 0 },
+        { label: '30-DAY', earned: streak >= 30 },
+      ],
+
       /** GET /submissions/:day */
       isSubmitted: (day) => shippedDays.has(Number(day)),
-      getSubmission: (day) => submissions[day] ?? seedSubmissions[day] ?? null,
+
+      getSubmission: (day) => {
+        const dayId = Number(day);
+        if (submissions[dayId]) return submissions[dayId];
+        if (shippedDays.has(dayId)) return { at: submissionTime(dayId) };
+        return null;
+      },
 
       /**
        * Where a day sits relative to today:
@@ -147,27 +180,17 @@ export function ChallengeProvider({ children }) {
       dayStatus: (day) => {
         const dayId = Number(day);
         if (shippedDays.has(dayId)) return 'shipped';
-        if (dayId < seedStudent.currentDay) return 'missed';
-        if (dayId === seedStudent.currentDay) return 'today';
+        if (dayId < currentDay) return 'missed';
+        if (dayId === currentDay) return 'today';
         return 'locked';
       },
 
-      /** 0 = not shipped, 1..4 = how much that day produced. */
-      outputLevel: (day) => (submissions[day] ? 4 : (outputByDay[day - 1] ?? 0)),
+      /** 0 = nothing shipped, 1..4 = how much that day produced. */
+      outputLevel: (day) => (submissions[day] ? 4 : (profile.output[day] ?? 0)),
 
       checksFor: (day) => checks[day] ?? [],
       toggleCheck,
       submitDay,
     };
-  }, [checks, submissions]);
-
-  return <ChallengeContext.Provider value={value}>{children}</ChallengeContext.Provider>;
-}
-
-export function useChallenge() {
-  const context = useContext(ChallengeContext);
-  if (!context) {
-    throw new Error('useChallenge must be used inside a ChallengeProvider');
-  }
-  return context;
+  }, [checks, profileKey, submissions]);
 }

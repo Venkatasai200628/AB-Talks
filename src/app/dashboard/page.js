@@ -1,12 +1,14 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import DayGrid from '../../components/DayGrid';
 import ProgressRing from '../../components/ProgressRing';
 import StreakPill from '../../components/StreakPill';
 import Button from '../../components/ui/Button';
 import HoverLink from '../../components/ui/HoverLink';
 import { useChallenge } from '../../lib/challengeState';
-import { TOTAL_DAYS, badges, getRecentDays, gridLeadingPad } from '../../lib/mockData';
+import { TOTAL_DAYS, getRecentDays, gridLeadingPad } from '../../lib/mockData';
 import {
   borderBox,
   color,
@@ -39,12 +41,7 @@ const styles = {
   name: { ...sansText(600, 13.5, 1.1), color: color.ink },
   meta: { ...monoText(400, 10.5), color: color.muted2, marginTop: 3 },
 
-  progress: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 16,
-    margin: `20px ${GUTTER}px 0`,
-  },
+  progress: { display: 'flex', alignItems: 'center', gap: 16, margin: `20px ${GUTTER}px 0` },
   progressBody: { flex: 1, display: 'flex', flexDirection: 'column', gap: 6 },
   day: { ...sansText(600, 17, 1.2), color: color.ink, margin: 0 },
   tally: { ...sansText(400, 12.5, 1.45), color: color.muted, margin: 0 },
@@ -66,20 +63,10 @@ const styles = {
     margin: `16px ${GUTTER}px 0`,
     padding: '14px 16px',
     background: color.surface,
-    border: `1px solid ${color.greenEdge}`,
     borderRadius: 14,
   },
   rank: { display: 'flex', alignItems: 'baseline', gap: 7, margin: '7px 0 0' },
-  place: { ...sansText(700, 26, 1), color: color.green, letterSpacing: '-.04em' },
   outOf: { ...monoText(400, 12.5), color: color.muted },
-  delta: {
-    display: 'inline-block',
-    padding: '5px 9px',
-    borderRadius: 20,
-    background: 'rgba(74,222,128,.14)',
-    ...monoText(700, 10.5),
-    color: color.green,
-  },
   percentile: { ...monoText(400, 10.5), color: color.muted2, marginTop: 7 },
 
   chips: {
@@ -111,15 +98,10 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: {
-    ...sansText(700, 21, 1.2),
-    color: color.ink,
-    letterSpacing: '-.03em',
-    margin: '8px 0 0',
-  },
+  title: { ...sansText(700, 21, 1.2), color: color.ink, letterSpacing: '-.03em', margin: '8px 0 0' },
   desc: { ...sansText(400, 13, 1.5), color: color.muted, margin: '7px 0 0' },
   pastTitle: { ...sansText(600, 14.5), color: color.ink3 },
-  pastMeta: { ...monoText(400, 11.5), color: color.green, margin: '5px 0 0' },
+  pastMeta: { ...monoText(400, 11.5), margin: '5px 0 0' },
   more: {
     padding: `4px ${GUTTER}px 0`,
     textAlign: 'center',
@@ -128,10 +110,14 @@ const styles = {
   },
 };
 
-export default function DashboardPage() {
-  const { student, outputLevel, getSubmission, isSubmitted } = useChallenge();
+function Dashboard() {
+  const stateKey = useSearchParams().get('state');
+  const { student, badges, outputLevel, getSubmission, isSubmitted, dayStatus } =
+    useChallenge(stateKey);
+
+  const suffix = stateKey ? `?state=${stateKey}` : '';
   const [today, ...past] = getRecentDays(student.currentDay);
-  const earlierCount = student.currentDay - 1 - past.length;
+  const earlierCount = Math.max(student.currentDay - 1 - past.length, 0);
   const todayDone = isSubmitted(today.id);
 
   return (
@@ -142,9 +128,12 @@ export default function DashboardPage() {
             {student.initials}
           </div>
           <div>
-            <div style={styles.name}>{student.name}</div>
+            <div style={{ ...styles.name, color: student.hasProfile ? color.ink : color.muted }}>
+              {student.name}
+            </div>
             <div style={styles.meta}>
-              {student.trackLabel} · COHORT {student.cohort}
+              {student.trackLabel}
+              {student.cohort ? ` · COHORT ${student.cohort}` : ''}
             </div>
           </div>
         </div>
@@ -168,17 +157,60 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section style={styles.standing} aria-label="Standing in cohort">
+      <section
+        style={{
+          ...styles.standing,
+          border: `1px solid ${student.ranked ? color.greenEdge : color.line2}`,
+        }}
+        aria-label="Standing in cohort"
+      >
         <div>
           <p style={labelTight}>STANDING IN {student.trackLabel}</p>
-          <p style={styles.rank}>
-            <span style={styles.place}>#{student.rank}</span>
-            <span style={styles.outOf}>of {student.cohortSize} active</span>
-          </p>
+          {student.ranked ? (
+            <p style={styles.rank}>
+              <span
+                style={{
+                  ...sansText(700, 26, 1),
+                  color: student.rankDelta < 0 ? color.amber : color.green,
+                  letterSpacing: '-.04em',
+                }}
+              >
+                #{student.rank}
+              </span>
+              <span style={styles.outOf}>of {student.cohortSize} active</span>
+            </p>
+          ) : (
+            <p style={styles.rank}>
+              <span style={{ ...sansText(700, 26, 1), color: color.muted3, letterSpacing: '-.04em' }}>
+                —
+              </span>
+              <span style={styles.outOf}>not ranked yet</span>
+            </p>
+          )}
         </div>
         <div style={{ flex: 'none', textAlign: 'right' }}>
-          <span style={styles.delta}>▲ {student.rankDelta} THIS WEEK</span>
-          <div style={styles.percentile}>TOP {student.percentile}%</div>
+          {student.ranked ? (
+            <>
+              <span
+                style={{
+                  display: 'inline-block',
+                  padding: '5px 9px',
+                  borderRadius: 20,
+                  background:
+                    student.rankDelta < 0 ? 'rgba(251,191,36,.14)' : 'rgba(74,222,128,.14)',
+                  ...monoText(700, 10.5),
+                  color: student.rankDelta < 0 ? color.amber : color.green,
+                }}
+              >
+                {student.rankDelta < 0 ? '▼' : '▲'} {Math.abs(student.rankDelta)} THIS WEEK
+              </span>
+              <div style={styles.percentile}>TOP {student.percentile}%</div>
+            </>
+          ) : (
+            <div style={{ ...monoText(400, 10.5), color: color.muted2, maxWidth: 118 }}>
+              SHIP DAY 1 TO ENTER THE TABLE
+            </div>
+          )}
         </div>
       </section>
 
@@ -214,6 +246,8 @@ export default function DashboardPage() {
         currentDay={student.currentDay}
         leadingPad={gridLeadingPad}
         outputLevel={outputLevel}
+        dayStatus={dayStatus}
+        hrefSuffix={suffix}
       />
 
       <section style={styles.spine} aria-label="Recent days">
@@ -245,7 +279,7 @@ export default function DashboardPage() {
             <h2 style={styles.title}>{today.title}</h2>
             <p style={styles.desc}>{today.blurb}</p>
             <Button
-              href={`/day/${today.id}`}
+              href={`/day/${today.id}${suffix}`}
               style={{ height: 44, borderRadius: 11, fontSize: 14.5, marginTop: 14 }}
             >
               {todayDone ? `Review Day ${today.id}` : `Open Day ${today.id}`}
@@ -255,6 +289,7 @@ export default function DashboardPage() {
 
         {past.map((day) => {
           const submission = getSubmission(day.id);
+          const shipped = Boolean(submission);
           return (
             <div style={styles.row} key={day.id}>
               <div style={styles.rail} aria-hidden="true">
@@ -262,7 +297,7 @@ export default function DashboardPage() {
                   style={{
                     ...styles.marker,
                     background: color.surface,
-                    color: color.green,
+                    color: shipped ? color.green : color.muted3,
                     ...monoText(500, 13),
                   }}
                 >
@@ -272,13 +307,15 @@ export default function DashboardPage() {
               </div>
               <div style={{ flex: 1, paddingBottom: 18 }}>
                 <HoverLink
-                  href={`/day/${day.id}`}
-                  style={styles.pastTitle}
+                  href={`/day/${day.id}${suffix}`}
+                  style={{ ...styles.pastTitle, color: shipped ? color.ink3 : color.muted3 }}
                   hoverStyle={{ color: color.ink }}
                 >
                   {day.title}
                 </HoverLink>
-                <p style={styles.pastMeta}>commit + post ✓ {submission?.at ?? '—'}</p>
+                <p style={{ ...styles.pastMeta, color: shipped ? color.green : color.muted2 }}>
+                  {shipped ? `commit + post ✓ ${submission.at}` : 'missed — nothing sent'}
+                </p>
               </div>
             </div>
           );
@@ -287,5 +324,13 @@ export default function DashboardPage() {
 
       {earlierCount > 0 && <p style={styles.more}>↓ {earlierCount} earlier days</p>}
     </main>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<main style={screen} />}>
+      <Dashboard />
+    </Suspense>
   );
 }

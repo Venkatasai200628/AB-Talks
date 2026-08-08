@@ -130,7 +130,9 @@ function DayFrame({ day, student, children }) {
 function ChallengeDay() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const { student, checksFor, toggleCheck, submitDay, getSubmission, dayStatus } = useChallenge();
+  const stateKey = searchParams.get('state');
+  const { student, checksFor, toggleCheck, submitDay, getSubmission, dayStatus } =
+    useChallenge(stateKey);
 
   const day = getChallengeDay(params.id ?? student.currentDay);
   const status = dayStatus(day.id);

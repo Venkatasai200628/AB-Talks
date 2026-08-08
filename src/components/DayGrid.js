@@ -66,7 +66,14 @@ const cellHover = { outline: `1.5px solid ${color.line3}`, outlineOffset: 1 };
  * The 60-day contribution grid. Columns are weeks, rows are weekdays, and the
  * shade of a cell is how much that day shipped.
  */
-export default function DayGrid({ totalDays, currentDay, leadingPad, outputLevel }) {
+export default function DayGrid({
+  totalDays,
+  currentDay,
+  leadingPad,
+  outputLevel,
+  dayStatus,
+  hrefSuffix = '',
+}) {
   const columns = Math.ceil((leadingPad + totalDays) / ROWS);
 
   const cells = Array.from({ length: columns * ROWS }, (_, i) => {
@@ -102,7 +109,7 @@ export default function DayGrid({ totalDays, currentDay, leadingPad, outputLevel
               return (
                 <HoverLink
                   key={i}
-                  href={`/day/${day}`}
+                  href={`/day/${day}${hrefSuffix}`}
                   style={styles.today}
                   hoverStyle={cellHover}
                   aria-label={`Day ${day}, today`}
@@ -118,14 +125,15 @@ export default function DayGrid({ totalDays, currentDay, leadingPad, outputLevel
               );
             }
 
+            // Shade is output, so a missed day is simply the darkest cell.
             const level = outputLevel(day);
             return (
               <HoverLink
                 key={i}
-                href={`/day/${day}`}
+                href={`/day/${day}${hrefSuffix}`}
                 style={{ ...styles.cell, background: color.grid[level] }}
                 hoverStyle={cellHover}
-                aria-label={`Day ${day}, ${level ? 'shipped' : 'missed'}`}
+                aria-label={`Day ${day}, ${dayStatus ? dayStatus(day) : 'shipped'}`}
               />
             );
           })}
