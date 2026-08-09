@@ -1,6 +1,8 @@
 import { Fragment } from 'react';
+import Link from 'next/link';
 import Button from '../components/ui/Button';
 import HoverLink from '../components/ui/HoverLink';
+import ThemeToggle from '../components/ThemeToggle';
 import { landingProof, landingSteps } from '../lib/mockData';
 import { bareList, color, eyebrow, GUTTER, monoText, sansText, screen } from '../styles/tokens';
 
@@ -14,6 +16,7 @@ const styles = {
   },
   brand: { ...monoText(700, 13), color: color.ink, letterSpacing: '-.02em' },
   navLink: { ...monoText(400, 12), color: color.muted },
+  appbarLink: { ...monoText(400, 12), color: color.muted },
   hero: { padding: `22px ${GUTTER}px 0` },
   title: {
     ...sansText(700, 31, 1.14),
@@ -53,9 +56,12 @@ export default function LandingPage() {
     <main style={screen}>
       <header style={styles.appbar}>
         <span style={styles.brand}>ABTALKS</span>
-        <HoverLink href="/dashboard" style={styles.navLink} hoverStyle={{ color: color.ink }}>
-          Log in
-        </HoverLink>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          <ThemeToggle />
+          <Link href="/dashboard" style={styles.appbarLink}>
+            Log in
+          </Link>
+        </div>
       </header>
 
       <section style={styles.hero}>

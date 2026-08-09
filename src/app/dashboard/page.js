@@ -1,10 +1,11 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import DayGrid from '../../components/DayGrid';
 import ProgressRing from '../../components/ProgressRing';
 import StreakPill from '../../components/StreakPill';
+import ThemeToggle from '../../components/ThemeToggle';
 import Button from '../../components/ui/Button';
 import HoverLink from '../../components/ui/HoverLink';
 import { useChallenge } from '../../lib/challengeState';
@@ -116,7 +117,8 @@ function Dashboard() {
     useChallenge(stateKey);
 
   const suffix = stateKey ? `?state=${stateKey}` : '';
-  const [today, ...past] = getRecentDays(student.currentDay);
+  const [showAllPast, setShowAllPast] = useState(false);
+  const [today, ...past] = getRecentDays(student.currentDay, showAllPast ? student.currentDay : 3);
   const earlierCount = Math.max(student.currentDay - 1 - past.length, 0);
   const todayDone = isSubmitted(today.id);
 
@@ -137,7 +139,10 @@ function Dashboard() {
             </div>
           </div>
         </div>
-        <StreakPill count={student.streak} />
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <ThemeToggle />
+          <StreakPill count={student.streak} />
+        </div>
       </header>
 
       <section style={styles.progress} aria-label="Challenge progress">
@@ -322,7 +327,22 @@ function Dashboard() {
         })}
       </section>
 
-      {earlierCount > 0 && <p style={styles.more}>↓ {earlierCount} earlier days</p>}
+      {earlierCount > 0 && !showAllPast && (
+        <button
+          style={{ ...styles.more, background: 'none', border: 'none', cursor: 'pointer', width: '100%', paddingBottom: 20 }}
+          onClick={() => setShowAllPast(true)}
+        >
+          ↓ {earlierCount} earlier days
+        </button>
+      )}
+      {showAllPast && (
+        <button
+          style={{ ...styles.more, background: 'none', border: 'none', cursor: 'pointer', width: '100%', paddingBottom: 20 }}
+          onClick={() => setShowAllPast(false)}
+        >
+          ↑ hide earlier days
+        </button>
+      )}
     </main>
   );
 }

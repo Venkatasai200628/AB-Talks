@@ -149,7 +149,7 @@ export default function BuildPane({
         </p>
         <p style={styles.clock}>{closed ? (submittedAt ?? '—') : formatClock(elapsed)}</p>
         <p style={styles.note}>
-          {closed ? 'submitted and counted' : `estimate was ${day.estimateMinutes} minutes`}
+          {closed ? 'submitted and counted' : `average time took to complete the session is ${day.estimateMinutes} minutes`}
         </p>
       </section>
 
