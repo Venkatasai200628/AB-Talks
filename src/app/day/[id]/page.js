@@ -141,7 +141,7 @@ function ChallengeDay() {
 
   const requestedTab = searchParams.get('tab');
   const [tab, setTab] = useState(
-    TABS.some((item) => item.id === requestedTab) ? requestedTab : 'task',
+    TABS.some((item) => item.id === requestedTab) ? requestedTab : (closed ? 'submit' : 'task'),
   );
   const [remaining, setRemaining] = useState(null);
   const tablist = useRef(null);

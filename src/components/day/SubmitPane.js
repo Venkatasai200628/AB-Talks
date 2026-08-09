@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import confetti from 'canvas-confetti';
 import Button from '../ui/Button';
 import HoverLink from '../ui/HoverLink';
 import {
@@ -127,6 +129,17 @@ export default function SubmitPane({ day, submission, onSubmit, isToday = true }
   const [github, setGithub] = useState('');
   const [linkedin, setLinkedin] = useState('');
   const [recapOpen, setRecapOpen] = useState(true);
+  const [justSubmitted, setJustSubmitted] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (justSubmitted) {
+      const timer = setTimeout(() => {
+        router.push('/dashboard');
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [justSubmitted, router]);
 
   const githubOk = isGithub(github);
   const linkedinOk = isLinkedin(linkedin);
@@ -137,11 +150,15 @@ export default function SubmitPane({ day, submission, onSubmit, isToday = true }
       <div style={styles.pane}>
         <section style={styles.done}>
           <div style={styles.mark} aria-hidden="true">
-            ✓
+            {justSubmitted ? '🎉' : '✓'}
           </div>
-          <h1 style={styles.doneTitle}>Day {day.id} is in</h1>
+          <h1 style={styles.doneTitle}>
+            {justSubmitted ? "Hurray! Challenge Completed!" : `Day ${day.id} is in`}
+          </h1>
           <p style={styles.doneNote}>
-            {isToday
+            {justSubmitted
+              ? "Awesome work! Redirecting to dashboard in a few seconds..."
+              : isToday
               ? `Submitted at ${submission.at}. Tomorrow's task unlocks at midnight.`
               : `Closed out at ${submission.at}, and it still counts.`}
           </p>
@@ -185,6 +202,15 @@ export default function SubmitPane({ day, submission, onSubmit, isToday = true }
     event.preventDefault();
     if (!canSubmit) return;
     onSubmit(github.trim(), linkedin.trim());
+    setJustSubmitted(true);
+    
+    // Trigger confetti!
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: [color.accent, color.green, color.amber, '#38bdf8']
+    });
   };
 
   const fieldStyle = (valid) => ({
