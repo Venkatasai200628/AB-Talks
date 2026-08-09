@@ -300,7 +300,7 @@ export default function SubmitPane({ day, submission, onSubmit, isToday = true }
         {recapOpen && (
           <div>
             <h2 style={styles.recapTitle}>{day.title}</h2>
-            <p style={styles.recapBody}>{day.recap}</p>
+            <p style={styles.recapBody}>{day.requirements?.length > 0 ? day.requirements.map(r => r.brief).join('. ') + '.' : day.recap}</p>
           </div>
         )}
       </section>

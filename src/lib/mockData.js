@@ -15,7 +15,7 @@ export const defaultTrack = track;
 export const landingProof = [
   { value: '60/60', label: 'DAYS DONE', tone: 'accent' },
   { value: '1,890', label: 'POST VIEWS' },
-  { value: '4', label: 'INTERVIEWS', tone: 'green' },
+  { value: '32', label: 'INTERVIEWS', tone: 'green' },
 ];
 
 export const trackOptions = [
