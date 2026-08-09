@@ -1,3 +1,4 @@
+import AppShell from '../components/AppShell';
 import { ChallengeProvider } from '../lib/challengeState';
 import BottomNav from '../components/BottomNav';
 import { color, sans } from '../styles/tokens';
@@ -16,21 +17,10 @@ export const viewport = {
 
 const body = {
   margin: 0,
-  background: '#000',
   color: color.ink,
   fontFamily: sans,
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
-};
-
-const shell = {
-  boxSizing: 'border-box',
-  minHeight: '100dvh',
-  maxWidth: 430,
-  margin: '0 auto',
-  background: color.bg,
-  display: 'flex',
-  flexDirection: 'column',
 };
 
 const lightThemeCSS = `
@@ -79,10 +69,10 @@ export default function RootLayout({ children }) {
       </head>
       <body style={body}>
         <ChallengeProvider>
-          <div style={shell}>
+          <AppShell>
             {children}
             <BottomNav />
-          </div>
+          </AppShell>
         </ChallengeProvider>
       </body>
     </html>
