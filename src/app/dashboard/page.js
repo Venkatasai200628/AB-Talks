@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useRef, useEffect } from 'react';
 import DayGrid from '../../components/DayGrid';
 import ProgressRing from '../../components/ProgressRing';
 import StreakPill from '../../components/StreakPill';
@@ -110,6 +110,38 @@ const styles = {
     color: color.muted2,
   },
 };
+
+function ScrollReveal({ children, delay = 0 }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const domRef = useRef();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setTimeout(() => setIsVisible(true), delay);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -50px 0px' });
+    
+    if (domRef.current) observer.observe(domRef.current);
+    return () => observer.disconnect();
+  }, [delay]);
+
+  return (
+    <div
+      ref={domRef}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+        transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 function DashboardContent() {
   const stateKey = useSearchParams().get('state');
@@ -306,37 +338,39 @@ function DashboardContent() {
           </div>
         </div>
 
-        {past.map((day) => {
+        {past.map((day, idx) => {
           const submission = getSubmission(day.id);
           const shipped = Boolean(submission);
           return (
-            <div style={styles.row} key={day.id}>
-              <div style={styles.rail} aria-hidden="true">
-                <span
-                  style={{
-                    ...styles.marker,
-                    background: color.surface,
-                    color: shipped ? color.green : color.muted3,
-                    ...monoText(500, 13),
-                  }}
-                >
-                  {day.id}
-                </span>
-                <span style={{ flex: 1, width: 2, marginTop: 6, background: color.line2 }} />
+            <ScrollReveal key={day.id} delay={idx * 100}>
+              <div style={styles.row}>
+                <div style={styles.rail} aria-hidden="true">
+                  <span
+                    style={{
+                      ...styles.marker,
+                      background: color.surface,
+                      color: shipped ? color.green : color.muted3,
+                      ...monoText(500, 13),
+                    }}
+                  >
+                    {day.id}
+                  </span>
+                  <span style={{ flex: 1, width: 2, marginTop: 6, background: color.line2 }} />
+                </div>
+                <div style={{ flex: 1, paddingBottom: 18 }}>
+                  <HoverLink
+                    href={`/day/${day.id}${suffix}`}
+                    style={{ ...styles.pastTitle, color: shipped ? color.ink3 : color.muted3 }}
+                    hoverStyle={{ color: color.ink }}
+                  >
+                    {day.title}
+                  </HoverLink>
+                  <p style={{ ...styles.pastMeta, color: shipped ? color.green : color.muted2 }}>
+                    {shipped ? `commit + post ✓ ${submission.at}` : 'missed — nothing sent'}
+                  </p>
+                </div>
               </div>
-              <div style={{ flex: 1, paddingBottom: 18 }}>
-                <HoverLink
-                  href={`/day/${day.id}${suffix}`}
-                  style={{ ...styles.pastTitle, color: shipped ? color.ink3 : color.muted3 }}
-                  hoverStyle={{ color: color.ink }}
-                >
-                  {day.title}
-                </HoverLink>
-                <p style={{ ...styles.pastMeta, color: shipped ? color.green : color.muted2 }}>
-                  {shipped ? `commit + post ✓ ${submission.at}` : 'missed — nothing sent'}
-                </p>
-              </div>
-            </div>
+            </ScrollReveal>
           );
         })}
       </section>

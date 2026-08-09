@@ -214,6 +214,69 @@ function Profile() {
           </div>
         </div>
 
+        {/* Hot Jobs Section */}
+        <h3 style={{ ...labelTight, marginTop: 32, marginBottom: 12 }}>HOT JOBS FOR YOU</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Mock Job 1 */}
+          <div style={{ ...styles.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0, padding: 16 }}>
+             <div>
+               <h4 style={{ ...sansText(600, 15), color: color.ink, margin: '0 0 4px' }}>Frontend Engineer</h4>
+               <p style={{ ...sansText(400, 13), color: color.muted, margin: 0 }}>Vercel · Remote</p>
+             </div>
+             <div style={{ textAlign: 'right' }}>
+               <div style={{ ...monoText(500, 11), color: color.green, background: color.greenWash, padding: '2px 8px', borderRadius: 12, marginBottom: 4, display: 'inline-block' }}>
+                 94% MATCH
+               </div>
+               <p style={{ ...sansText(400, 11), color: color.muted, margin: 0 }}>Based on projects</p>
+             </div>
+          </div>
+          {/* Mock Job 2 */}
+          <div style={{ ...styles.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0, padding: 16 }}>
+             <div>
+               <h4 style={{ ...sansText(600, 15), color: color.ink, margin: '0 0 4px' }}>React Developer</h4>
+               <p style={{ ...sansText(400, 13), color: color.muted, margin: 0 }}>Linear · San Francisco, CA</p>
+             </div>
+             <div style={{ textAlign: 'right' }}>
+               <div style={{ ...monoText(500, 11), color: color.green, background: color.greenWash, padding: '2px 8px', borderRadius: 12, marginBottom: 4, display: 'inline-block' }}>
+                 88% MATCH
+               </div>
+               <p style={{ ...sansText(400, 11), color: color.muted, margin: 0 }}>Based on projects</p>
+             </div>
+          </div>
+        </div>
+
+        {/* Interview History */}
+        <h3 style={{ ...labelTight, marginTop: 32, marginBottom: 12 }}>INTERVIEW CALLS</h3>
+        <div style={{ ...styles.card, padding: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '20px 20px 16px', borderBottom: `1px solid ${color.line2}`, display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <span style={{ ...monoText(700, 32, 1), color: color.ink }}>3</span>
+            <span style={{ ...sansText(500, 14), color: color.muted }}>Total Interviews</span>
+          </div>
+          <div style={{ padding: '16px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 16 }}>
+               <div style={{ width: 8, height: 8, borderRadius: 4, background: color.green, marginTop: 6 }} />
+               <div>
+                 <h5 style={{ ...sansText(600, 14), color: color.ink, margin: '0 0 2px' }}>Stripe</h5>
+                 <p style={{ ...sansText(400, 13), color: color.muted, margin: 0 }}>Technical Assessment (Passed)</p>
+               </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 16 }}>
+               <div style={{ width: 8, height: 8, borderRadius: 4, background: color.amber, marginTop: 6 }} />
+               <div>
+                 <h5 style={{ ...sansText(600, 14), color: color.ink, margin: '0 0 2px' }}>Google</h5>
+                 <p style={{ ...sansText(400, 13), color: color.muted, margin: 0 }}>Phone Screen (Pending)</p>
+               </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+               <div style={{ width: 8, height: 8, borderRadius: 4, background: color.accent, marginTop: 6 }} />
+               <div>
+                 <h5 style={{ ...sansText(600, 14), color: color.ink, margin: '0 0 2px' }}>Meta</h5>
+                 <p style={{ ...sansText(400, 13), color: color.muted, margin: 0 }}>Recruiter Call (Scheduled)</p>
+               </div>
+            </div>
+          </div>
+        </div>
+
         {/* Badges */}
         <h3 style={{ ...labelTight, marginTop: 32, marginBottom: 12 }}>ACHIEVEMENTS</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>

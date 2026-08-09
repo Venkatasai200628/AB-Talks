@@ -27,7 +27,7 @@ function formatSize(bytes) {
 }
 
 const styles = {
-  pane: { display: 'flex', flexDirection: 'column', flex: 1 },
+  pane: { display: 'flex', flexDirection: 'column', flex: 1, paddingBottom: 64, position: 'relative' },
   session: { padding: `28px ${GUTTER}px 0`, textAlign: 'center' },
   clock: {
     ...monoText(700, 66, 1),
@@ -58,6 +58,7 @@ const styles = {
     background: color.surface,
     border: `1.5px solid ${color.accent}`,
     borderRadius: 16,
+    transition: 'all 0.6s ease',
   },
   checksTitle: {
     ...sansText(700, 19, 1.25),
@@ -133,13 +134,21 @@ export default function BuildPane({
   const fileInput = useRef(null);
   const elapsedRef = useRef(elapsed);
 
+  // AI Hint System State
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [lastHintTime, setLastHintTime] = useState(null);
+  const [hintInput, setHintInput] = useState('');
+  const [hints, setHints] = useState([]);
+  const [isGeneratingHint, setIsGeneratingHint] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const chatBottomRef = useRef(null);
+
   useEffect(() => {
     elapsedRef.current = elapsed;
   }, [elapsed]);
 
   useEffect(() => {
     return () => {
-      // Save session time globally when we unmount (leave the tab/page)
       if (!closed) updateSessionTime(elapsedRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -160,15 +169,42 @@ export default function BuildPane({
       setIsVerifying(false);
       setIsVerified(true);
       checkAll();
-      return;
+      
+      const timer = setTimeout(() => {
+        onNext();
+      }, 3500); // Wait to show the top popup before auto-advancing
+      return () => clearTimeout(timer);
     }
 
     const timer = setTimeout(() => {
       setVerifyingIndex(prev => prev + 1);
-    }, 3000);
+    }, 1200);
 
     return () => clearTimeout(timer);
-  }, [isVerifying, verifyingIndex, day.requirements.length, checkAll]);
+  }, [isVerifying, verifyingIndex, day.requirements.length, checkAll, onNext]);
+
+  // AI Hint Cooldown Timer
+  useEffect(() => {
+    if (!lastHintTime) return;
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const diff = now - lastHintTime;
+      const cooldown = 5 * 60 * 1000;
+      if (diff >= cooldown) {
+        setCooldownRemaining(0);
+        clearInterval(interval);
+      } else {
+        setCooldownRemaining(Math.ceil((cooldown - diff) / 1000));
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lastHintTime]);
+
+  useEffect(() => {
+    if (chatBottomRef.current) {
+      chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [hints, isGeneratingHint]);
 
   const handleFile = (event) => {
     const file = event.target.files?.[0];
@@ -191,8 +227,70 @@ export default function BuildPane({
     setVerifyingIndex(0);
   };
 
+  const handleRequestHint = () => {
+    if (!attachment) return;
+    if (hintsUsed >= 3) return;
+    if (cooldownRemaining > 0) return;
+    if (!hintInput.trim()) return;
+
+    const userQuestion = hintInput.trim();
+    setHintInput('');
+    setHints(prev => [...prev, { sender: 'user', text: userQuestion }]);
+    setIsGeneratingHint(true);
+    setHintsUsed(prev => prev + 1);
+    setLastHintTime(Date.now());
+    setCooldownRemaining(5 * 60);
+
+    setTimeout(() => {
+      setIsGeneratingHint(false);
+      setHints(prev => [...prev, { 
+        sender: 'ai', 
+        text: `Based on your attached ${attachment.name}, it looks like you are missing a small condition in your logic. Try reviewing the requirements.` 
+      }]);
+    }, 2000);
+  };
+
   return (
-    <div style={styles.pane}>
+    <div style={{ ...styles.pane, position: 'relative', zIndex: 1 }}>
+      {/* Top Page Popup (Success Notification) */}
+      {(isVerified && !closed) && (
+        <div style={{
+          position: 'absolute',
+          top: 16,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: color.greenWash,
+          border: `1px solid ${color.greenEdge}`,
+          borderRadius: 16,
+          padding: '16px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+          zIndex: 50,
+          animation: 'slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+          width: '90%',
+          maxWidth: 400
+        }}>
+          <div style={{ background: color.green, color: color.surface, padding: 4, borderRadius: '50%', display: 'flex', flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <p style={{ ...sansText(500, 14, 1.4), color: color.green, margin: 0 }}>
+            Your work is fine and satisfying all conditions. You can put it on LinkedIn and GitHub!
+          </p>
+          <style>{`
+            @keyframes slideDown {
+              from { opacity: 0; transform: translate(-50%, -20px); }
+              to { opacity: 1; transform: translate(-50%, 0); }
+            }
+            @keyframes fadeInUp {
+              from { opacity: 0; transform: translateY(10px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+          `}</style>
+        </div>
+      )}
+
       <section style={styles.session}>
         <p style={{ ...eyebrow, letterSpacing: '.18em' }}>
           {closed ? `DAY ${day.id} · CLOSED` : `WORKING ON DAY ${day.id}`}
@@ -240,6 +338,85 @@ export default function BuildPane({
         </div>
       )}
 
+      {/* AI Hint Agent Section */}
+      {!closed && (
+        <section style={{ padding: `0 ${GUTTER}px`, marginTop: 32 }}>
+          <div style={{ background: color.surface, border: `1px solid ${color.line2}`, borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 320 }}>
+            <div style={{ background: color.surface2, padding: '12px 16px', borderBottom: `1px solid ${color.line2}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, ...sansText(600, 14), color: color.ink }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" />
+                </svg>
+                AI Hint Agent
+                <span style={{ ...monoText(500, 11), color: color.muted, padding: '2px 8px', background: color.surface, borderRadius: 12, border: `1px solid ${color.line}`, marginLeft: 4 }}>
+                  {hintsUsed}/3 Hints
+                </span>
+              </div>
+              {cooldownRemaining > 0 && (
+                <div style={{ ...monoText(500, 12), color: color.amber }}>
+                  Next hint in {Math.floor(cooldownRemaining / 60)}:{String(cooldownRemaining % 60).padStart(2, '0')}
+                </div>
+              )}
+            </div>
+            
+            <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
+              {hints.length === 0 && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <p style={{ ...sansText(400, 13), color: color.muted2, margin: '8px 0', textAlign: 'center' }}>
+                    {!attachment ? 'Upload your code file first so I can analyze it and help you.' : 'Ask a question about your code. You have 3 hints available.'}
+                  </p>
+                </div>
+              )}
+              {hints.map((h, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: h.sender === 'user' ? 'flex-end' : 'flex-start' }}>
+                  <div style={{
+                    background: h.sender === 'user' ? color.accentWashSoft : color.surface2,
+                    border: `1px solid ${h.sender === 'user' ? color.accentEdge : color.line2}`,
+                    padding: '8px 12px',
+                    borderRadius: h.sender === 'user' ? '12px 4px 12px 12px' : '4px 12px 12px 12px',
+                    ...sansText(400, 13, 1.4),
+                    color: color.ink,
+                    maxWidth: '85%'
+                  }}>
+                    {h.text}
+                  </div>
+                </div>
+              ))}
+              {isGeneratingHint && (
+                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                   <div style={{ padding: '8px 12px', borderRadius: '4px 12px 12px 12px', background: color.surface2, border: `1px solid ${color.line2}`, ...sansText(400, 13), color: color.muted }}>
+                    Analyzing code...
+                   </div>
+                </div>
+              )}
+              <div ref={chatBottomRef} />
+            </div>
+
+            <div style={{ padding: '12px', borderTop: `1px solid ${color.line2}`, display: 'flex', gap: 8, background: color.surface }}>
+              <input
+                value={hintInput}
+                onChange={e => setHintInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleRequestHint()}
+                placeholder={!attachment ? "Upload .zip to ask..." : (hintsUsed >= 3 ? "No hints left." : (cooldownRemaining > 0 ? "Cooling down..." : "Ask for a hint..."))}
+                disabled={!attachment || hintsUsed >= 3 || cooldownRemaining > 0 || isGeneratingHint}
+                style={{
+                  flex: 1, padding: '12px 16px', borderRadius: 8, border: `1px solid ${color.line}`,
+                  background: color.surface2, color: color.ink, ...sansText(400, 13), outline: 'none'
+                }}
+              />
+              <Button 
+                size="sm" 
+                onClick={handleRequestHint} 
+                disabled={!attachment || !hintInput.trim() || hintsUsed >= 3 || cooldownRemaining > 0 || isGeneratingHint}
+                style={{ padding: '0 20px' }}
+              >
+                Ask
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {!closed && attachment && (
         <div style={styles.attach}>
           <div>
@@ -255,8 +432,14 @@ export default function BuildPane({
         </div>
       )}
 
-      {day.requirements.length > 0 && (
-        <section style={styles.checks}>
+      {/* Verification Checks Block - Conditionally rendered to prevent gap */}
+      {day.requirements.length > 0 && (isVerifying || isVerified || closed) && (
+        <section 
+          style={{
+            ...styles.checks, 
+            animation: 'fadeInUp 0.6s ease forwards'
+          }}
+        >
           <p style={{ ...labelTight, color: color.accent }}>02 · BUILD IT</p>
           <h2 style={styles.checksTitle}>
             {numberWord(day.requirements.length)} things must be true
@@ -264,7 +447,6 @@ export default function BuildPane({
 
           <div style={styles.checkList}>
             {day.requirements.map((req, i) => {
-              // Ignore manual checks[i] while the verification animation is running, so it plays cleanly.
               const done = closed || isVerified || (isVerifying ? i < verifyingIndex : Boolean(checks[i]));
               const processing = isVerifying && i === verifyingIndex;
               
