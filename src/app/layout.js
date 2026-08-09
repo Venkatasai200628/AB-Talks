@@ -1,6 +1,5 @@
 import AppShell from '../components/AppShell';
 import { ChallengeProvider } from '../lib/challengeState';
-import BottomNav from '../components/BottomNav';
 import { color, sans } from '../styles/tokens';
 
 export const metadata = {
@@ -12,6 +11,8 @@ export const metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: color.bg,
 };
 
@@ -24,6 +25,14 @@ const body = {
 };
 
 const lightThemeCSS = `
+  html, body {
+    height: 100%;
+    overflow: hidden; /* Lock viewport so ONLY AppShell scrolls */
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+
   [data-theme="light"] {
     --color-bg: #ffffff;
     --color-surface: #f4f2ee;
@@ -47,6 +56,23 @@ const lightThemeCSS = `
     --color-grid-2: #ff9d79;
     --color-grid-3: #ff6d3a;
     --color-grid-4: #ff5c2b;
+    --color-track: #e0ded8;
+  }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Hide scrollbar for IE, Edge and Firefox */
+  * {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 `;
 
@@ -71,7 +97,6 @@ export default function RootLayout({ children }) {
         <ChallengeProvider>
           <AppShell>
             {children}
-            <BottomNav />
           </AppShell>
         </ChallengeProvider>
       </body>

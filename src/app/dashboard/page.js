@@ -124,26 +124,28 @@ function Dashboard() {
 
   return (
     <main style={screen}>
-      <header style={styles.who}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={styles.avatar} aria-hidden="true">
-            {student.initials}
-          </div>
-          <div>
-            <div style={{ ...styles.name, color: student.hasProfile ? color.ink : color.muted }}>
-              {student.name}
+      {!showAllPast && (
+        <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
+          <header style={styles.who}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={styles.avatar} aria-hidden="true">
+                {student.initials}
+              </div>
+              <div>
+                <div style={{ ...styles.name, color: student.hasProfile ? color.ink : color.muted }}>
+                  {student.name}
+                </div>
+                <div style={styles.meta}>
+                  {student.trackLabel}
+                  {student.cohort ? ` · COHORT ${student.cohort}` : ''}
+                </div>
+              </div>
             </div>
-            <div style={styles.meta}>
-              {student.trackLabel}
-              {student.cohort ? ` · COHORT ${student.cohort}` : ''}
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <ThemeToggle />
+              <StreakPill count={student.streak} />
             </div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <ThemeToggle />
-          <StreakPill count={student.streak} />
-        </div>
-      </header>
+          </header>
 
       <section style={styles.progress} aria-label="Challenge progress">
         <ProgressRing percent={student.percent} />
@@ -246,16 +248,28 @@ function Dashboard() {
         ))}
       </div>
 
-      <DayGrid
-        totalDays={TOTAL_DAYS}
-        currentDay={student.currentDay}
-        leadingPad={gridLeadingPad}
-        outputLevel={outputLevel}
-        dayStatus={dayStatus}
-        hrefSuffix={suffix}
-      />
+          <DayGrid
+            totalDays={TOTAL_DAYS}
+            currentDay={student.currentDay}
+            leadingPad={gridLeadingPad}
+            outputLevel={outputLevel}
+            dayStatus={dayStatus}
+            hrefSuffix={suffix}
+          />
+        </div>
+      )}
 
-      <section style={styles.spine} aria-label="Recent days">
+      <section style={{ ...styles.spine, paddingTop: showAllPast ? 24 : 26 }} aria-label="Recent days">
+        {showAllPast && (
+          <button
+            style={{ ...styles.more, textAlign: 'left', padding: '0 16px 20px', background: 'none', border: 'none', cursor: 'pointer', color: color.accent }}
+            onClick={() => {
+              setShowAllPast(false);
+            }}
+          >
+            ← Back to Dashboard
+          </button>
+        )}
         <div style={styles.row}>
           <div style={styles.rail} aria-hidden="true">
             <span
@@ -330,7 +344,10 @@ function Dashboard() {
       {earlierCount > 0 && !showAllPast && (
         <button
           style={{ ...styles.more, background: 'none', border: 'none', cursor: 'pointer', width: '100%', paddingBottom: 20 }}
-          onClick={() => setShowAllPast(true)}
+          onClick={() => {
+            setShowAllPast(true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
         >
           ↓ {earlierCount} earlier days
         </button>
@@ -338,7 +355,10 @@ function Dashboard() {
       {showAllPast && (
         <button
           style={{ ...styles.more, background: 'none', border: 'none', cursor: 'pointer', width: '100%', paddingBottom: 20 }}
-          onClick={() => setShowAllPast(false)}
+          onClick={() => {
+            setShowAllPast(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
         >
           ↑ hide earlier days
         </button>

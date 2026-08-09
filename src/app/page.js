@@ -58,7 +58,7 @@ export default function LandingPage() {
         <span style={styles.brand}>ABTALKS</span>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <ThemeToggle />
-          <Link href="/dashboard" style={styles.appbarLink}>
+          <Link href="/onboarding" style={styles.appbarLink}>
             Log in
           </Link>
         </div>
@@ -111,7 +111,7 @@ export default function LandingPage() {
       </ol>
 
       <div style={styles.cta}>
-        <Button href="/dashboard">Start Day 1 — it&apos;s free</Button>
+        <Button href="/onboarding">Start Day 1 — it&apos;s free</Button>
       </div>
     </main>
   );

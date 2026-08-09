@@ -131,7 +131,7 @@ function ChallengeDay() {
   const params = useParams();
   const searchParams = useSearchParams();
   const stateKey = searchParams.get('state');
-  const { student, checksFor, toggleCheck, submitDay, getSubmission, dayStatus } =
+  const { student, checksFor, toggleCheck, submitDay, getSubmission, dayStatus, sessionTimeFor, updateSessionTime, checkAll } =
     useChallenge(stateKey);
 
   const day = getChallengeDay(params.id ?? student.currentDay);
@@ -143,7 +143,6 @@ function ChallengeDay() {
   const [tab, setTab] = useState(
     TABS.some((item) => item.id === requestedTab) ? requestedTab : 'task',
   );
-  const [sessionStart, setSessionStart] = useState(null);
   const [remaining, setRemaining] = useState(null);
   const tablist = useRef(null);
 
@@ -164,9 +163,7 @@ function ChallengeDay() {
     );
   }
 
-  // The session clock starts the first time the student opens the Build tab.
   const openTab = (next) => {
-    if (next === 'build' && !closed) setSessionStart((start) => start ?? Date.now());
     setTab(next);
     // Keep the tab shareable without paying for a route transition.
     const url = new URL(window.location.href);
@@ -213,12 +210,14 @@ function ChallengeDay() {
       {tab === 'build' && (
         <BuildPane
           day={day}
-          sessionStart={sessionStart}
+          sessionTime={sessionTimeFor(day.id)}
+          updateSessionTime={(t) => updateSessionTime(day.id, t)}
+          checkAll={() => checkAll(day.id, day.requirements.length)}
           checks={checksFor(day.id)}
           onToggleCheck={(index) => toggleCheck(day.id, index)}
           onNext={() => openTab('submit')}
           closed={closed}
-          submittedAt={submission?.at}
+          submission={submission}
         />
       )}
 
@@ -227,7 +226,7 @@ function ChallengeDay() {
           day={day}
           submission={submission}
           isToday={isToday}
-          onSubmit={(github, linkedin) => submitDay(day.id, github, linkedin)}
+          onSubmit={(github, linkedin) => submitDay(day.id, github, linkedin, sessionTimeFor(day.id))}
         />
       )}
 

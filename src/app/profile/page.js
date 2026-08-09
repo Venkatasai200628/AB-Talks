@@ -215,27 +215,56 @@ function Profile() {
         </div>
 
         {/* Badges */}
-        <h3 style={{ ...labelTight, marginTop: 32, marginBottom: 12 }}>EARNED BADGES</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {badges.map(b => (
-            <div 
-              key={b.label} 
-              style={{ 
-                ...styles.card, 
-                marginBottom: 0, 
-                padding: 16, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                borderColor: b.earned ? color.greenEdge : color.line,
-                background: b.earned ? color.greenWash : 'transparent',
-                opacity: b.earned ? 1 : 0.6
-              }}
-            >
-              <span style={{ ...sansText(600, 14), color: b.earned ? color.green : color.muted }}>{b.label}</span>
-              <span>{b.earned ? '✓' : '🔒'}</span>
-            </div>
-          ))}
+        <h3 style={{ ...labelTight, marginTop: 32, marginBottom: 12 }}>ACHIEVEMENTS</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {badges.map((b) => {
+            const bg = b.earned ? `color-mix(in srgb, ${b.hue} 12%, transparent)` : color.surface;
+            const border = b.earned ? `color-mix(in srgb, ${b.hue} 40%, transparent)` : color.line2;
+            const iconBg = b.earned ? `color-mix(in srgb, ${b.hue} 25%, transparent)` : color.surface3;
+            const opacity = b.earned ? 1 : 0.4;
+
+            return (
+              <div 
+                key={b.id} 
+                style={{ 
+                  ...borderBox,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  background: bg,
+                  border: `1px solid ${border}`,
+                  borderRadius: 16,
+                  padding: '24px 12px',
+                  opacity,
+                  transition: 'all 0.2s',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                <div style={{ 
+                  width: 48, height: 48, borderRadius: 24, 
+                  background: iconBg, display: 'flex', 
+                  alignItems: 'center', justifyContent: 'center',
+                  fontSize: 22, marginBottom: 16,
+                  boxShadow: b.earned ? `0 0 20px color-mix(in srgb, ${b.hue} 40%, transparent)` : 'none'
+                }}>
+                  {b.icon}
+                </div>
+                <h4 style={{ ...sansText(700, 14), margin: '0 0 4px', color: color.ink, letterSpacing: '-.02em' }}>
+                  {b.label}
+                </h4>
+                <p style={{ ...sansText(400, 11, 1.4), color: color.muted2, margin: 0 }}>
+                  {b.desc}
+                </p>
+                {!b.earned && (
+                  <div style={{ marginTop: 12, ...monoText(600, 9), color: color.muted3, letterSpacing: '.1em' }}>
+                    LOCKED
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
       </section>

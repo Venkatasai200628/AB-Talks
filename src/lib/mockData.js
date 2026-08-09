@@ -18,6 +18,38 @@ export const landingProof = [
   { value: '4', label: 'INTERVIEWS', tone: 'green' },
 ];
 
+export const trackOptions = [
+  { id: 'web', title: 'Web Dev', desc: 'React, Next.js, and modern frontend.' },
+  { id: 'ml', title: 'Machine Learning', desc: 'Python, PyTorch, and AI models.' },
+  { id: 'dsa', title: 'DSA', desc: 'Data structures and algorithms in C++ or Java.' },
+  { id: 'app', title: 'App Dev', desc: 'React Native, iOS, and Android.' },
+  { id: 'devops', title: 'DevOps', desc: 'Docker, AWS, and CI/CD pipelines.' },
+];
+
+export const mockReviews = [
+  {
+    id: 1,
+    name: 'Ananya Desai',
+    track: 'Web Dev',
+    text: 'This challenge completely changed how I learn. Shipping something every single day forced me out of tutorial hell. I finally have a portfolio to show recruiters.',
+    avatar: 'AD',
+  },
+  {
+    id: 2,
+    name: 'Rahul Verma',
+    track: 'DSA',
+    text: 'The consistency is what matters. Before this, I used to practice for a week and then stop. Doing 60 days straight built a habit I still keep today.',
+    avatar: 'RV',
+  },
+  {
+    id: 3,
+    name: 'Priya Kumar',
+    track: 'App Dev',
+    text: 'Posting my progress on LinkedIn every day was scary at first, but it got me noticed by a startup founder. Just landed my first internship!',
+    avatar: 'PK',
+  },
+];
+
 export const landingSteps = [
   {
     num: '01',

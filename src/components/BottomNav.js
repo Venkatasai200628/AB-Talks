@@ -1,50 +1,66 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { color, monoText } from '../styles/tokens';
+import { useChallenge } from '../lib/challengeState';
 
 const styles = {
   nav: {
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
-    padding: '12px 10px 24px',
+    padding: '8px 8px',
     background: 'var(--color-surface, #141416)',
-    borderTop: `1px solid ${color.line}`,
-    position: 'sticky',
-    bottom: 0,
-    zIndex: 10,
-    boxShadow: '0 -10px 40px rgba(0,0,0,0.3)',
+    border: `1px solid var(--color-line2, rgba(255,255,255,0.1))`,
+    borderRadius: 32,
+    position: 'absolute',
+    bottom: 24,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 'calc(100% - 48px)',
+    zIndex: 100,
+    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
   },
-  link: {
+  navLink: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
     textDecoration: 'none',
-    ...monoText(500, 10.5),
-    padding: '8px 12px',
-    borderRadius: 12,
-    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    color: color.muted3,
+    padding: '6px 16px',
+    borderRadius: 24,
+    transition: 'all 0.2s ease',
+  },
+  navLinkActive: {
+    color: color.accent,
+    background: color.accentWashSoft,
+    transform: 'scale(1.05)',
+  },
+  icon: {
+    marginBottom: 4,
+  },
+  text: {
+    ...monoText(600, 10),
   },
 };
 
 const Icons = {
   Home: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={styles.icon}>
       <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
       <polyline points="9 22 9 12 15 12 15 22" />
     </svg>
   ),
   Challenge: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={styles.icon}>
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   ),
   Leaderboard: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={styles.icon}>
       <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
       <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
       <path d="M4 22h16" />
@@ -54,7 +70,7 @@ const Icons = {
     </svg>
   ),
   Profile: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={styles.icon}>
       <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
@@ -63,14 +79,20 @@ const Icons = {
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
+  const stateKey = searchParams?.get('state');
+  const { student } = useChallenge(stateKey);
 
-  if (pathname === '/') return null;
+  if (!pathname || pathname === '/' || pathname.startsWith('/onboarding')) return null;
+
+  const suffix = stateKey ? `?state=${stateKey}` : '';
 
   const navItems = [
-    { name: 'Home', path: '/dashboard' },
-    { name: 'Challenge', path: '/day/1' },
-    { name: 'Leaderboard', path: '/leaderboard' },
-    { name: 'Profile', path: '/profile' },
+    { name: 'Home', path: `/dashboard${suffix}` },
+    { name: 'Challenge', path: `/day/${student.currentDay}${suffix}` },
+    { name: 'Leaderboard', path: `/leaderboard${suffix}` },
+    { name: 'Profile', path: `/profile${suffix}` },
   ];
 
   return (
@@ -82,15 +104,10 @@ export default function BottomNav() {
           <Link
             key={item.name}
             href={item.path}
-            style={{
-              ...styles.link,
-              color: isActive ? color.accent : color.muted,
-              background: isActive ? color.accentWashSoft : 'transparent',
-              transform: isActive ? 'scale(1.05)' : 'scale(1)',
-            }}
+            style={isActive ? { ...styles.navLink, ...styles.navLinkActive } : styles.navLink}
           >
             {Icons[item.name]}
-            <span style={{ fontWeight: isActive ? 600 : 500 }}>{item.name}</span>
+            <span style={{ ...styles.text, fontWeight: isActive ? 700 : 500 }}>{item.name}</span>
           </Link>
         );
       })}

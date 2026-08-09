@@ -14,7 +14,7 @@ import { getProfile } from './profiles';
  */
 
 const STORAGE_KEY = 'abtalks.v1';
-const EMPTY_STATE = { submissions: {}, checks: {} };
+const EMPTY_STATE = { submissions: {}, checks: {}, sessionTimes: {} };
 
 let snapshot = EMPTY_STATE;
 let readFromStorage = false;
@@ -28,6 +28,7 @@ function readStored() {
     return {
       submissions: parsed.submissions ?? {},
       checks: parsed.checks ?? {},
+      sessionTimes: parsed.sessionTimes ?? {},
     };
   } catch {
     return null;
@@ -70,12 +71,12 @@ function clockNow() {
 }
 
 /** POST /submissions */
-function submitDay(day, githubUrl, linkedinUrl) {
+function submitDay(day, githubUrl, linkedinUrl, elapsedSeconds = 0) {
   update((state) => ({
     ...state,
     submissions: {
       ...state.submissions,
-      [day]: { github: githubUrl, linkedin: linkedinUrl, at: clockNow() },
+      [day]: { github: githubUrl, linkedin: linkedinUrl, at: clockNow(), timeSpent: elapsedSeconds },
     },
   }));
 }
@@ -88,6 +89,22 @@ function toggleCheck(day, index) {
     next[index] = !next[index];
     return { ...state, checks: { ...state.checks, [day]: next } };
   });
+}
+
+/** Checks all requirements for a day automatically. */
+function checkAll(day, totalChecks) {
+  update((state) => ({
+    ...state,
+    checks: { ...state.checks, [day]: Array(totalChecks).fill(true) },
+  }));
+}
+
+/** Persist elapsed time for a session. */
+function updateSessionTime(day, seconds) {
+  update((state) => ({
+    ...state,
+    sessionTimes: { ...(state.sessionTimes || {}), [day]: seconds },
+  }));
 }
 
 /** Consecutive shipped days counting back from today. */
@@ -118,7 +135,7 @@ export function useChallenge(profileKey) {
     throw new Error('useChallenge must be used inside a ChallengeProvider');
   }
 
-  const { submissions, checks } = state;
+  const { submissions, checks, sessionTimes = {} } = state;
 
   return useMemo(() => {
     const profile = getProfile(profileKey);
@@ -157,9 +174,38 @@ export function useChallenge(profileKey) {
 
       /** Earned state follows the data rather than being hard-coded. */
       badges: [
-        { label: '7-DAY STREAK', earned: streak >= 7 },
-        { label: 'NO FREEZE USED', earned: profile.student.freezesUsed === 0 && shipped > 0 },
-        { label: '30-DAY', earned: streak >= 30 },
+        { 
+          id: 'first',
+          label: 'First Blood', 
+          desc: 'Shipped your very first project',
+          icon: '🚀',
+          earned: shipped >= 1,
+          hue: 'var(--color-accent)',
+        },
+        { 
+          id: 'streak7',
+          label: '7-Day Streak', 
+          desc: 'Built a daily habit for a week',
+          icon: '🔥',
+          earned: streak >= 7,
+          hue: 'var(--color-amber)',
+        },
+        { 
+          id: 'nofreeze',
+          label: 'Unfrozen', 
+          desc: 'Never used a streak freeze',
+          icon: '❄️',
+          earned: profile.student.freezesUsed === 0 && shipped > 0,
+          hue: '#38bdf8', // Cyan
+        },
+        { 
+          id: 'halfway',
+          label: 'Halfway There', 
+          desc: 'Reached the 30-day milestone',
+          icon: '🎯',
+          earned: shipped >= 30,
+          hue: 'var(--color-green)',
+        },
       ],
 
       /** GET /submissions/:day */
@@ -189,8 +235,11 @@ export function useChallenge(profileKey) {
       outputLevel: (day) => (submissions[day] ? 4 : (profile.output[day] ?? 0)),
 
       checksFor: (day) => checks[day] ?? [],
+      sessionTimeFor: (day) => sessionTimes[day] ?? 0,
       toggleCheck,
+      checkAll,
+      updateSessionTime,
       submitDay,
     };
-  }, [checks, profileKey, submissions]);
+  }, [checks, sessionTimes, profileKey, submissions]);
 }

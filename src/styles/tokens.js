@@ -77,7 +77,7 @@ export const screen = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
-  paddingBottom: 34,
+  paddingBottom: 110, // Ensure content isn't hidden behind the floating BottomNav overlay
 };
 
 export const eyebrow = {

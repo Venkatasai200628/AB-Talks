@@ -15,11 +15,14 @@ import { color } from '../styles/tokens';
  * at any width; only the frame around it does.
  */
 
+import BottomNav from './BottomNav';
+
 const backdrop = {
-  minHeight: '100dvh',
+  height: '100dvh',
   display: 'flex',
   justifyContent: 'center',
   background: '#000',
+  overflow: 'hidden',
 };
 
 const backdropWide = {
@@ -36,15 +39,17 @@ const card = {
   boxSizing: 'border-box',
   width: '100%',
   maxWidth: 430,
+  height: '100dvh',
   background: color.bg,
   display: 'flex',
   flexDirection: 'column',
+  position: 'relative',
 };
 
 const cardWide = {
-  minHeight: 800,
+  height: 800,
   borderRadius: 32,
-  overflow: 'hidden',
+  overflow: 'hidden', // Re-add this so the scrollable content doesn't bleed out of the rounded corners
   boxShadow: '0 48px 120px -36px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.07)',
 };
 
@@ -53,8 +58,11 @@ export default function AppShell({ children }) {
 
   return (
     <div style={isWide ? { ...backdrop, ...backdropWide } : backdrop}>
-      <div style={isWide ? { ...card, ...cardWide } : { ...card, minHeight: '100dvh' }}>
-        {children}
+      <div style={isWide ? { ...card, ...cardWide } : card}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          {children}
+        </div>
+        <BottomNav />
       </div>
     </div>
   );

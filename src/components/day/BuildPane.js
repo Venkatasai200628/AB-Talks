@@ -115,30 +115,80 @@ function RemoveButton({ onClick, label: buttonLabel }) {
 
 export default function BuildPane({
   day,
-  sessionStart,
+  sessionTime,
+  updateSessionTime,
+  checkAll,
   checks,
   onToggleCheck,
   onNext,
   closed = false,
-  submittedAt,
+  submission,
 }) {
-  const [elapsed, setElapsed] = useState(0);
+  const [elapsed, setElapsed] = useState(sessionTime || 0);
+  const [uploadError, setUploadError] = useState(null);
   const [attachment, setAttachment] = useState(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyingIndex, setVerifyingIndex] = useState(-1);
+  const [isVerified, setIsVerified] = useState(false);
   const fileInput = useRef(null);
+  const elapsedRef = useRef(elapsed);
 
   useEffect(() => {
-    if (closed || !sessionStart) return undefined;
-    const tick = () => setElapsed(Math.floor((Date.now() - sessionStart) / 1000));
-    tick();
-    const id = setInterval(tick, 1000);
+    elapsedRef.current = elapsed;
+  }, [elapsed]);
+
+  useEffect(() => {
+    return () => {
+      // Save session time globally when we unmount (leave the tab/page)
+      if (!closed) updateSessionTime(elapsedRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [closed]);
+
+  useEffect(() => {
+    if (closed || isVerifying || isVerified) return undefined;
+    const id = setInterval(() => {
+      setElapsed((prev) => prev + 1);
+    }, 1000);
     return () => clearInterval(id);
-  }, [closed, sessionStart]);
+  }, [closed, isVerifying, isVerified]);
+
+  useEffect(() => {
+    if (!isVerifying) return;
+    
+    if (verifyingIndex >= day.requirements.length) {
+      setIsVerifying(false);
+      setIsVerified(true);
+      checkAll();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setVerifyingIndex(prev => prev + 1);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [isVerifying, verifyingIndex, day.requirements.length, checkAll]);
 
   const handleFile = (event) => {
     const file = event.target.files?.[0];
-    if (file) setAttachment({ name: file.name, size: file.size });
-    // Let the same file be picked again after it is removed.
+    if (!file) return;
+
+    if (!file.name.endsWith('.zip')) {
+      setUploadError('Invalid file type. Please upload a .zip file.');
+      event.target.value = '';
+      return;
+    }
+
+    setUploadError(null);
+    setAttachment({ name: file.name, size: file.size });
     event.target.value = '';
+  };
+
+  const startVerification = () => {
+    if (!attachment) return;
+    setIsVerifying(true);
+    setVerifyingIndex(0);
   };
 
   return (
@@ -147,31 +197,46 @@ export default function BuildPane({
         <p style={{ ...eyebrow, letterSpacing: '.18em' }}>
           {closed ? `DAY ${day.id} · CLOSED` : `WORKING ON DAY ${day.id}`}
         </p>
-        <p style={styles.clock}>{closed ? (submittedAt ?? '—') : formatClock(elapsed)}</p>
+        <p style={styles.clock}>{closed ? (submission?.timeSpent ? formatClock(submission.timeSpent) : (submission?.at ?? '—')) : formatClock(elapsed)}</p>
         <p style={styles.note}>
-          {closed ? 'submitted and counted' : `average time took to complete the session is ${day.estimateMinutes} minutes`}
+          {closed ? (submission?.timeSpent ? `You completed this in ${Math.ceil(submission.timeSpent / 60)} minutes` : 'submitted and counted') : `average time took to complete the session is ${day.estimateMinutes} minutes`}
         </p>
       </section>
 
       {!closed && (
-        <div style={styles.actions}>
-          <input
-            ref={fileInput}
-            type="file"
-            onChange={handleFile}
-            hidden
-            aria-hidden="true"
-            tabIndex={-1}
-          />
-          <Button variant="quiet" size="sm" onClick={() => fileInput.current?.click()}>
-            <span style={{ color: color.accent, ...monoText(400, 14) }} aria-hidden="true">
-              ↑
-            </span>
-            Upload
-          </Button>
-          <Button size="sm" onClick={onNext}>
-            I&apos;m done →
-          </Button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ ...styles.actions, width: '100%', justifyContent: 'center' }}>
+            <input
+              ref={fileInput}
+              type="file"
+              accept=".zip"
+              onChange={handleFile}
+              hidden
+              aria-hidden="true"
+              tabIndex={-1}
+            />
+            <Button variant="quiet" size="sm" onClick={() => fileInput.current?.click()} disabled={isVerifying || isVerified}>
+              <span style={{ color: color.accent, ...monoText(400, 14) }} aria-hidden="true">
+                ↑
+              </span>
+              Upload
+            </Button>
+            
+            {(!isVerified && !closed) && (
+              <Button size="sm" onClick={startVerification} disabled={!attachment || isVerifying}>
+                {isVerifying ? 'Verifying...' : 'I\'m done →'}
+              </Button>
+            )}
+            
+            {(isVerified || closed) && (
+              <Button size="sm" onClick={onNext}>
+                Go to Submit →
+              </Button>
+            )}
+          </div>
+          {uploadError && (
+            <p style={{ ...sansText(500, 12), color: color.accent, marginTop: 8 }}>{uploadError}</p>
+          )}
         </div>
       )}
 
@@ -199,27 +264,36 @@ export default function BuildPane({
 
           <div style={styles.checkList}>
             {day.requirements.map((req, i) => {
-              const done = closed || Boolean(checks[i]);
+              const done = closed || isVerified || i < verifyingIndex || Boolean(checks[i]);
+              const processing = isVerifying && i === verifyingIndex;
+              
               return (
                 <button
                   key={req.check}
                   type="button"
                   role="checkbox"
                   aria-checked={done}
-                  disabled={closed}
+                  disabled={closed || isVerifying || isVerified}
                   onClick={() => onToggleCheck(i)}
-                  style={{ ...styles.check, cursor: closed ? 'default' : 'pointer' }}
+                  style={{ ...styles.check, cursor: (closed || isVerifying || isVerified) ? 'default' : 'pointer' }}
                 >
                   <span
                     style={{
                       ...styles.box,
                       ...(done
                         ? { background: color.accent, border: `1.5px solid ${color.accent}`, color: color.accentInk }
+                        : processing
+                        ? { border: `1.5px solid ${color.accent}`, color: color.accent }
                         : { border: `1.5px solid ${color.hairline}` }),
                     }}
                     aria-hidden="true"
                   >
-                    {done ? '✓' : ''}
+                    {done ? '✓' : processing ? (
+                      <svg width="12" height="12" viewBox="0 0 24 24" style={{ animation: 'ab-spin 1s linear infinite' }}>
+                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+                        <style>{`@keyframes ab-spin { 100% { transform: rotate(360deg); } }`}</style>
+                      </svg>
+                    ) : ''}
                   </span>
                   <span
                     style={{
@@ -237,9 +311,11 @@ export default function BuildPane({
         </section>
       )}
 
-      <div style={styles.cta}>
-        <Button onClick={onNext}>{closed ? 'See what you sent →' : 'Go to Submit →'}</Button>
-      </div>
+      {(isVerified || closed) && (
+        <div style={styles.cta}>
+          <Button onClick={onNext}>{closed ? 'See what you sent →' : 'Go to Submit →'}</Button>
+        </div>
+      )}
     </div>
   );
 }
