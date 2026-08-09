@@ -264,7 +264,8 @@ export default function BuildPane({
 
           <div style={styles.checkList}>
             {day.requirements.map((req, i) => {
-              const done = closed || isVerified || i < verifyingIndex || Boolean(checks[i]);
+              // Ignore manual checks[i] while the verification animation is running, so it plays cleanly.
+              const done = closed || isVerified || (isVerifying ? i < verifyingIndex : Boolean(checks[i]));
               const processing = isVerifying && i === verifyingIndex;
               
               return (
