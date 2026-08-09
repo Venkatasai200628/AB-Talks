@@ -1,5 +1,5 @@
 import HoverLink from './ui/HoverLink';
-import { color, GUTTER, labelTight, monoText } from '../styles/tokens';
+import { color, GUTTER, labelTight, monoText, sansText } from '../styles/tokens';
 
 const ROWS = 7;
 const CELL = 27;
@@ -38,15 +38,24 @@ const styles = {
     gridAutoFlow: 'column',
     gap: 4,
   },
-  cell: { borderRadius: 6, display: 'block' },
+  cell: { 
+    borderRadius: 6, 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    border: `1px solid ${color.line2}`,
+    ...sansText(500, 11),
+    color: color.muted3,
+    textDecoration: 'none'
+  },
   today: {
     borderRadius: 6,
-    background: '#1A1A1E',
+    background: 'var(--color-surface3, #1A1A1E)',
     boxShadow: `inset 0 0 0 1.5px ${color.accent}`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    ...monoText(700, 10),
+    ...sansText(700, 11),
     color: color.accent,
   },
   foot: {
@@ -101,7 +110,7 @@ export default function DayGrid({
           {cells.map((day, i) => {
             if (day === null) {
               return (
-                <i key={i} style={{ ...styles.cell, background: 'transparent' }} aria-hidden="true" />
+                <i key={i} style={{ ...styles.cell, background: 'transparent', borderColor: 'transparent' }} aria-hidden="true" />
               );
             }
 

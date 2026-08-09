@@ -10,42 +10,48 @@ export { mono, sans };
  */
 
 export const color = {
-  bg: '#0A0A0B',
-  surface: '#141416',
-  surface2: '#1A1A1D',
-  surface3: '#26262B',
+  bg: 'var(--color-bg, #0A0A0B)',
+  surface: 'var(--color-surface, #141416)',
+  surface2: 'var(--color-surface2, #1A1A1D)',
+  surface3: 'var(--color-surface3, #26262B)',
 
-  line: 'rgba(255,255,255,.07)',
-  line2: 'rgba(255,255,255,.09)',
-  line3: 'rgba(255,255,255,.14)',
+  line: 'var(--color-line, rgba(255,255,255,.07))',
+  line2: 'var(--color-line2, rgba(255,255,255,.09))',
+  line3: 'var(--color-line3, rgba(255,255,255,.14))',
 
-  accent: '#FF5C2B',
-  accentInk: '#0A0A0B',
-  accentWash: 'rgba(255,92,43,.12)',
-  accentWashSoft: 'rgba(255,92,43,.07)',
-  accentEdge: 'rgba(255,92,43,.28)',
+  accent: 'var(--color-accent, #FF5C2B)',
+  accentInk: 'var(--color-accentInk, #0A0A0B)',
+  accentWash: 'var(--color-accentWash, rgba(255,92,43,.12))',
+  accentWashSoft: 'var(--color-accentWashSoft, rgba(255,92,43,.07))',
+  accentEdge: 'var(--color-accentEdge, rgba(255,92,43,.28))',
 
-  green: '#4ADE80',
-  greenWash: 'rgba(74,222,128,.12)',
-  greenEdge: 'rgba(74,222,128,.28)',
-  amber: '#FBBF24',
-  amberWash: 'rgba(251,191,36,.1)',
-  amberEdge: 'rgba(251,191,36,.25)',
+  green: 'var(--color-green, #4ADE80)',
+  greenWash: 'var(--color-greenWash, rgba(74,222,128,.12))',
+  greenEdge: 'var(--color-greenEdge, rgba(74,222,128,.28))',
+  amber: 'var(--color-amber, #FBBF24)',
+  amberWash: 'var(--color-amberWash, rgba(251,191,36,.1))',
+  amberEdge: 'var(--color-amberEdge, rgba(251,191,36,.25))',
 
-  ink: '#F4F2EE',
-  ink2: '#D4D2CC',
-  ink3: '#B4B4BD',
-  ink4: '#9A9AA4',
-  muted: '#8A8A93',
-  muted2: '#6E6E78',
-  muted3: '#5C5C64',
-  faint: '#4E4E56',
-  faint2: '#4A4A52',
-  hairline: '#3A3A42',
-  track: '#222227',
+  ink: 'var(--color-ink, #F4F2EE)',
+  ink2: 'var(--color-ink2, #D4D2CC)',
+  ink3: 'var(--color-ink3, #B4B4BD)',
+  ink4: 'var(--color-ink4, #9A9AA4)',
+  muted: 'var(--color-muted, #8A8A93)',
+  muted2: 'var(--color-muted2, #6E6E78)',
+  muted3: 'var(--color-muted3, #5C5C64)',
+  faint: 'var(--color-faint, #4E4E56)',
+  faint2: 'var(--color-faint2, #4A4A52)',
+  hairline: 'var(--color-hairline, #3A3A42)',
+  track: 'var(--color-track, #222227)',
 
   /** Empty → maximum output, indexed 0..4. */
-  grid: ['#131316', '#4A1F0F', '#8A3315', '#C7481C', '#FF5C2B'],
+  grid: [
+    'var(--color-grid-0, transparent)', 
+    'var(--color-grid-1, #4A1F0F)', 
+    'var(--color-grid-2, #8A3315)', 
+    'var(--color-grid-3, #C7481C)', 
+    'var(--color-grid-4, #FF5C2B)'
+  ],
 };
 
 export const GUTTER = 22;
