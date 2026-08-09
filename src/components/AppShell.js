@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useIsWide } from '../lib/useViewport';
 import { color } from '../styles/tokens';
 
@@ -62,7 +63,9 @@ export default function AppShell({ children }) {
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           {children}
         </div>
-        <BottomNav />
+        <Suspense fallback={null}>
+          <BottomNav />
+        </Suspense>
       </div>
     </div>
   );

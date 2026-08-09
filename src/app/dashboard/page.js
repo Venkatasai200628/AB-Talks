@@ -111,7 +111,7 @@ const styles = {
   },
 };
 
-function Dashboard() {
+function DashboardContent() {
   const stateKey = useSearchParams().get('state');
   const { student, badges, outputLevel, getSubmission, isSubmitted, dayStatus } =
     useChallenge(stateKey);
@@ -367,10 +367,10 @@ function Dashboard() {
   );
 }
 
-export default function DashboardPage() {
+export default function Dashboard() {
   return (
     <Suspense fallback={<main style={screen} />}>
-      <Dashboard />
+      <DashboardContent />
     </Suspense>
   );
 }
