@@ -1,111 +1,59 @@
-# ABTalks — 60-day challenge
+# ABTalks — 60 Days of Code (Redesign & Enhancement)
 
-A redesign of the ABTalks student experience: a free 60-day coding challenge where
-students build something small each day and post the proof to GitHub and LinkedIn.
+A fully redesigned, mobile-first frontend experience for the ABTalks 60-day coding challenge for Indian college students.
 
-Designed mobile-first at 390px, for a student on a phone late at night after college.
+## 🗺️ Route Map
 
-## Route map
+For the evaluation process, here are the required routes in exact order:
 
-```text
 /
 /dashboard
 /day/12
-```
 
-## Live deployment
+*(Note: The AI Onboarding flow `/onboarding` and Profile `/profile` are additional routes introduced as part of the student experience enhancement).*
 
-_Not yet deployed._
+## 📱 Mobile-First Design & The "Sunlight" Theme
 
-## Running it
+The entire application was designed natively for a **390px mobile viewport** as students predominantly use this on their phones late at night. 
 
-```bash
-npm install && npm run dev
-```
+To make the late-night coding experience beautiful and premium:
+- **App Shell Framework**: When viewed on desktop, the application is presented inside a rounded mobile-sized card floating on a dark backdrop, ensuring the mobile design is never stretched or broken.
+- **Sunlight Tint**: A subtle, warm orange radial gradient acts as a global background tint across both dark and light modes, creating an ambient glow that feels dynamic and premium.
 
-Then open http://localhost:3000.
+## 🚀 The Thoughtful Idea: The AI Career Mentor & Hint Agent
 
-## The three screens
+To dramatically improve the student experience beyond just a checklist, we introduced **AI-Driven Career Guidance**.
 
-**`/` — Landing.** For someone who has never heard of ABTalks. It answers what it is,
-what it costs, and what they get, in that order: the promise, proof that finishing means
-something (days done, post reach, interviews), the three steps of a day, one CTA.
+1. **AI Resume Upload & Onboarding**: Before jumping blindly into a track, students can upload their resume. The system analyzes their current skills and the target role they want (e.g. Software Engineer), cross-references this with past successful students, and *recommends* the perfect track to bridge their skill gap.
+2. **AI Hint Agent (Build Pane)**: Getting stuck late at night is discouraging. During the challenge (Day 12), an AI Hint Agent is available. Students upload their `.zip` code file, and the AI analyzes *their specific code* to provide up to 3 context-aware hints, governed by a cooldown timer to prevent cheating.
+3. **Hot Jobs & Interview Tracking**: On the Profile page, the AI maps the student's completed tasks to real-world "Hot Jobs" matching their new skills, and tracks mock/real interview calls (Stripe, Meta) to prove that the 60 days of code actually lead to career outcomes.
 
-**`/dashboard` — Home.** Current streak, today's task, progress through the challenge,
-overall completion, and standing plus badges. The 60-day grid is the centrepiece: one
-cell per day, shaded by how much that day shipped.
+## 🧩 Element Breakdown (Fulfilling the Prompt)
 
-**`/day/12` — A challenge day.** Three tabs behind a fixed header. **Task** is the brief,
-what to build, and the docs to read first. **Build** is the working session, an upload,
-and the four acceptance checks. **Submit** is the two links that close the day.
+### 1. Landing Page (`/`)
+- **Use:** The first experience for a new student.
+- **Elements:** 
+  - A bold value proposition ("Ship real code. Build your streak. Get hired.")
+  - Clear explanations of the 60-day commitment.
+  - A frictionless "Start Day 1" button that leads into the AI Onboarding flow, building motivation and trust immediately.
 
-## Edge cases
+### 2. Student Dashboard (`/dashboard`)
+- **Use:** The home screen after logging in, outlining progress.
+- **Elements:**
+  - **Streak & Stats Header**: Instantly displays their current streak and completion percentage to leverage gamification and consistency.
+  - **Dynamic Timeline**: Handles edge cases beautifully. It shows past days (missed or completed), today's active task, and future locked tasks.
+  - **Bottom Navigation**: Persistent mobile-friendly tab bar to switch between the Dashboard, Leaderboard, and Profile.
 
-The brief calls for a first day with no streak, a missed day, and an empty profile.
-Each is a seeded account state, openable directly. Nothing extra renders on the plain
-routes — the same components just draw whatever the data says.
+### 3. Challenge Day (`/day/12`)
+- **Use:** The complete experience of a single challenge day.
+- **Elements:**
+  - **Session Timer**: A prominent timer at the top to track exactly how long they are spending on the task, creating urgency.
+  - **Remind Me What To Build**: A collapsible summary of the prompt so the student never loses context.
+  - **Build Tab**: Contains the upload button for their `.zip` file, and the AI Hint Agent to assist them if they get stuck.
+  - **Submit Tab**: After building, the user submits their GitHub commit URL and LinkedIn post URL as proof of work. 
+  - **Confetti Celebration**: Submitting successfully triggers a celebratory confetti animation and provides direct links to view their public proof of work.
 
-| State | URL |
-|---|---|
-| Typical — day 12, streak intact | `/dashboard` |
-| First day, no streak | `/dashboard?state=new` |
-| Broken streak, days 9 and 10 missed | `/dashboard?state=missed` |
-| Empty profile, nothing set up | `/dashboard?state=empty` |
-
-What changes on its own, because it is derived rather than hard-coded:
-
-- **Standing** falls back to *not ranked yet* with a line saying how to get ranked.
-- **Badges** are earned from the data — the streak badge unlocks at 7, the no-freeze
-  badge is lost once a freeze is spent.
-- **Rank movement** turns amber and flips to ▼ when a student falls.
-- **The spine** marks a missed day *missed — nothing sent* instead of a commit time.
-- **The profile** degrades to a placeholder name and *NO TRACK PICKED* with no cohort.
-
-Day-level states are reachable too: a finished day (`/day/5`) opens read-only, a day
-not yet reached (`/day/40`) is locked, and `/day/99` is refused.
-
-## The thoughtful bits
-
-**The grid is shaded by output, not attendance.** Most streak products draw a binary
-tick — you showed up or you didn't. Shading by how much a day actually produced means a
-heavy Saturday reads differently from a scraped-through Tuesday, and nine weeks of it is
-a picture of effort a student can put in front of a recruiter.
-
-**Every day names its trap.** Day 12 doesn't just say "build a debounced search input";
-it says the requests won't come back in the order you sent them. The failure a student
-would otherwise hit at 1am is stated up front, which is the difference between a task
-that teaches and a task that just takes the evening.
-
-**Docs before the editor.** Each day carries two or three short reads with a sentence on
-why each one matters, so a student starts from the right primitives instead of the first
-search result.
-
-**The acceptance checks are the spec.** The four things that must be true appear as the
-brief on the Task tab and as a checklist on the Build tab — the same sentences, so
-"done" is never a judgement call.
-
-## How it is built
-
-Next.js App Router, React 19, no CSS.
-
-Styling lives in React style objects on the components. `src/styles/tokens.js` holds the
-design system as plain JavaScript — colours, the type ramp, and `sansText(700, 31, 1.14)`
-helpers that read like a design spec. Fonts load through `next/font`. Since inline styles
-have no pseudo-classes, hover and focus are React state (`useHover`, `Button`, `HoverLink`).
-
-```
-src/
-  app/            routes: /, /dashboard, /day/[id]
-  components/     DayGrid, ProgressRing, StreakPill, day panes, ui primitives
-  lib/
-    curriculum.js   all 60 days: title, brief, four requirements
-    profiles.js     the seeded account states
-    mockData.js     the challenge itself and the landing copy
-    challengeState.js  the store — reads like an API, backed by localStorage
-  styles/tokens.js
-```
-
-There is no server, database, or auth — out of scope. `challengeState.js` stands in for
-the backend: pages call `submitDay`, `isSubmitted` and `dayStatus` rather than touching
-storage, so pointing them at a real API later is a change in one file. Submissions
-persist to `localStorage`, so a day you close out survives a refresh.
+## 🛠️ Tech Stack & Edge Cases
+- Built using **Next.js** and React.
+- **Mocked Data**: All data (streaks, days, leaderboards, profile stats) is driven by `mockData.js`.
+- **Edge Cases Handled**: Empty states (0-day streak), locked future days, and missed past days are all visually distinct and gracefully handled by the UI.
